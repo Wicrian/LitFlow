@@ -114,7 +114,7 @@ src/
 
 1. *Fork* du dépôt sur GitHub.
 2. **Settings › Pages › Source : GitHub Actions**.
-3. Chaque push sur `main` lance les tests puis publie le site (`.github/workflows/deploy.yml`).
+3. Chaque push sur la branche par défaut lance les tests puis publie le site (`.github/workflows/deploy.yml`).
 
 Le dossier `dist/` produit par `npm run build` peut aussi être déposé sur n’importe quel hébergement statique
 (serveur universitaire, Netlify…).
