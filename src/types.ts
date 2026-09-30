@@ -143,6 +143,11 @@ export interface Project {
     pending: string[];
     lastSync: string | null;
     lastError: string | null;
+    /** Version de la bibliothèque Zotero lors de la dernière lecture (pour ne relire que les changements). */
+    libraryVersion: number | null;
+    /** Collection Zotero -> nom de la source (y compris les sous-sous-collections). */
+    sourceMap: Record<string, string>;
+    lastPull: string | null;
   };
 }
 

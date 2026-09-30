@@ -259,7 +259,7 @@ export async function importFromZotero(
   client: ZoteroClient,
   p: Project,
   progress?: SyncProgress,
-): Promise<{ records: RecordItem[]; sources: Project['sources'] }> {
+): Promise<{ records: RecordItem[]; sources: Project['sources']; sourceMap: Record<string, string>; libraryVersion: number | null }> {
   if (!p.sourceCollection) throw new Error('Choisissez d’abord une collection source.');
   const all = await client.collections();
   const ours = new Set(Object.values(p.zoteroCollections));
@@ -300,7 +300,8 @@ export async function importFromZotero(
         kind: guessKind(name),
       },
   );
-  return { records, sources };
+  const sourceMap = Object.fromEntries(plan.map((x) => [x.key, x.source]));
+  return { records, sources, sourceMap, libraryVersion: client.libraryVersion };
 }
 
 function guessKind(name: string): Project['sources'][number]['kind'] {

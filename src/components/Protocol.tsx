@@ -165,6 +165,14 @@ export function Protocol() {
           <span>Préfixe des étiquettes Zotero (ex. « LF » → « LF:tri:exclu »)</span>
           <input type="text" value={p.sync.tagPrefix} onChange={(e) => set('sync', { ...p.sync, tagPrefix: e.target.value.replace(/:/g, '') })} />
         </label>
+        <div className="notice small">
+          <strong>Dans les deux sens :</strong> vous pouvez aussi décider directement dans Zotero, par exemple pendant la
+          lecture du texte intégral. Ajoutez l’étiquette <code>{p.sync.tagPrefix || 'LF'}:texte:exclu</code> (ou{' '}
+          <code>:inclus</code>, <code>:incertain</code>, <code>:introuvable</code>) et, si vous voulez, une raison{' '}
+          <code>{p.sync.tagPrefix || 'LF'}:texte:raison:Mauvaise population</code>. Glisser l’item dans une collection
+          « LitFlow – … » fonctionne aussi. LitFlow relit Zotero toutes les 45 secondes (et à chaque clic sur ⟳) ; au tri
+          titre-résumé, utilisez <code>{p.sync.tagPrefix || 'LF'}:tri:…</code>.
+        </div>
         <p className="small muted">
           Si vous menez plusieurs revues dans la même bibliothèque, donnez un préfixe différent à chacune. Changer le préfixe
           après avoir synchronisé laisse les anciennes étiquettes dans Zotero.

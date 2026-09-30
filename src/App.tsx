@@ -85,7 +85,7 @@ function Brand({ onClick }: { onClick: () => void }) {
 }
 
 function ProjectShell({ onHome, onSettings }: { onHome: () => void; onSettings: () => void }) {
-  const { project, syncStatus, syncNow, client } = useProject();
+  const { project, syncStatus, syncNow, client, pullNow, pullInfo, clearPullInfo } = useProject();
   const hasRecords = Object.keys(project.records).length > 0;
   const [view, setView] = useState<View>(hasRecords ? 'screening' : project.library ? 'import' : 'protocol');
 
@@ -133,8 +133,15 @@ function ProjectShell({ onHome, onSettings }: { onHome: () => void; onSettings: 
           <span className={`sync-dot ${dotClass}`} /> <span className="hide-mobile">{syncLabel}</span>
         </span>
         {client && (
-          <button className="btn small" onClick={() => void syncNow()} disabled={!project.sync.pending.length}>
-            ⟳ Synchroniser
+          <button
+            className="btn small"
+            title="Envoyer les décisions vers Zotero et lire les changements faits dans Zotero"
+            onClick={async () => {
+              await syncNow();
+              await pullNow();
+            }}
+          >
+            ⟳ <span className="hide-mobile">Synchroniser</span>
           </button>
         )}
         <button className="btn small" onClick={onSettings} title="Connexion Zotero">
@@ -150,6 +157,17 @@ function ProjectShell({ onHome, onSettings }: { onHome: () => void; onSettings: 
         ))}
       </nav>
       <main>
+        {pullInfo && (
+          <div className="notice row" style={{ marginBottom: '1rem' }}>
+            Reçu de Zotero : {pullInfo.changed > 0 && `${pullInfo.changed} décision(s) modifiée(s) dans Zotero`}
+            {pullInfo.changed > 0 && pullInfo.added > 0 && ' · '}
+            {pullInfo.added > 0 && `${pullInfo.added} nouvelle(s) référence(s)`}
+            <span className="spacer" />
+            <button className="btn small" onClick={clearPullInfo}>
+              OK
+            </button>
+          </div>
+        )}
         {syncStatus.state === 'error' && <div className="notice error" style={{ marginBottom: '1rem' }}>{syncStatus.message}</div>}
         {view === 'protocol' && <Protocol />}
         {view === 'import' && <ImportView onSettings={onSettings} onDone={() => setView('dedup')} />}

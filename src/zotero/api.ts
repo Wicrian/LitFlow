@@ -59,6 +59,9 @@ export class ZoteroError extends Error {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export class ZoteroClient {
+  /** Dernière version de bibliothèque renvoyée par Zotero (en-tête Last-Modified-Version). */
+  libraryVersion: number | null = null;
+
   constructor(
     private apiKey: string,
     public library: Pick<ZoteroLibrary, 'type' | 'id'> | null = null,
@@ -84,6 +87,9 @@ export class ZoteroClient {
       await sleep(retry * 1000);
       return this.request(path, init, attempt + 1);
     }
+    const lmv = Number(res.headers.get('Last-Modified-Version'));
+    if (lmv) this.libraryVersion = Math.max(this.libraryVersion ?? 0, lmv);
+    if (res.status === 304) return res;
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       const hint =
@@ -147,6 +153,11 @@ export class ZoteroClient {
   /** Items de premier niveau d'une collection (sans pièces jointes ni notes). */
   collectionItems(collectionKey: string, onProgress?: (done: number, total: number) => void): Promise<ZItem[]> {
     return this.all<ZItem>(`${this.prefix}/collections/${collectionKey}/items/top?format=json`, onProgress);
+  }
+
+  /** Items de premier niveau modifiés depuis une version de la bibliothèque. */
+  itemsSince(version: number): Promise<ZItem[]> {
+    return this.all<ZItem>(`${this.prefix}/items/top?since=${version}&format=json`);
   }
 
   itemsByKeys(keys: string[]): Promise<ZItem[]> {

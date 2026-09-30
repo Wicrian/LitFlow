@@ -4,6 +4,7 @@ import { newProject } from '../src/lib/frameworks';
 import { ZoteroClient, type ZCollection, type ZItem } from '../src/zotero/api';
 import { mergeImport } from '../src/zotero/mapping';
 import { importFromZotero, pushToZotero } from '../src/zotero/sync';
+import { applyChanges, fetchChanges } from '../src/zotero/pull';
 
 let collections: ZCollection[];
 let items: Map<string, ZItem>;
@@ -19,7 +20,10 @@ function fakeZotero(url: string, init: RequestInit = {}): Response {
   const path = u.pathname.replace(/^\/users\/1/, '');
   const method = init.method ?? 'GET';
   const json = (body: unknown, headers: Record<string, string> = {}) =>
-    new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json', ...headers } });
+    new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Last-Modified-Version': String(version), ...headers },
+    });
 
   if (method === 'GET' && path === '/collections') return json(collections, { 'Total-Results': String(collections.length) });
   const m = path.match(/^\/collections\/(\w+)\/items\/top$/);
@@ -28,6 +32,11 @@ function fakeZotero(url: string, init: RequestInit = {}): Response {
     const start = Number(u.searchParams.get('start') ?? 0);
     const limit = Number(u.searchParams.get('limit') ?? 100);
     return json(all.slice(start, start + limit), { 'Total-Results': String(all.length) });
+  }
+  if (method === 'GET' && path === '/items/top' && u.searchParams.has('since')) {
+    const since = Number(u.searchParams.get('since'));
+    const all = [...items.values()].filter((i) => i.version > since && !i.data.parentItem);
+    return json(all, { 'Total-Results': String(all.length) });
   }
   if (method === 'GET' && path === '/items') {
     const keys = (u.searchParams.get('itemKey') ?? '').split(',');
@@ -128,5 +137,52 @@ describe('Zotero', () => {
     // Réimport : les collections LitFlow ne sont pas prises pour des sources.
     const again = await importFromZotero(client, res2.project);
     expect(again.sources.map((s) => s.name).sort()).toEqual(['PubMed', 'Érudit']);
+  });
+
+  it('reprend les changements faits à la main dans Zotero', async () => {
+    const client = new ZoteroClient('key', { type: 'user', id: '1' });
+    let p = newProject('Test');
+    p.library = { type: 'user', id: '1', name: 'Moi' };
+    p.sourceCollection = { key: 'ROOT', name: 'Ma revue' };
+    const imp = await importFromZotero(client, p);
+    p = mergeImport({ ...p, sources: imp.sources }, imp.records).project;
+    p.sync = { ...p.sync, sourceMap: imp.sourceMap, libraryVersion: imp.libraryVersion };
+    const d = (decision: 'include' | 'exclude') => ({ decision, reasons: [], note: 'ma note', at: '' });
+    p.screening = { A: d('include'), B: d('include'), C: d('include') };
+    p = (await pushToZotero(client, p, ['A', 'B', 'C'])).project;
+    const cols = p.zoteroCollections;
+
+    // Dans Zotero : A reçoit l'étiquette « exclu » + une raison (l'ancienne étiquette reste),
+    // B est glissé dans la collection « Exclus » (il reste aussi dans « Inclus »),
+    // C a été re-modifié dans LitFlow (en attente) : LitFlow garde la main.
+    const edit = (key: string, fn: (data: ZItem['data']) => void) => {
+      const it = items.get(key)!;
+      const v = ++version;
+      const data = { ...it.data, version: v };
+      fn(data);
+      items.set(key, { key, version: v, data });
+    };
+    edit('A', (x) => x.tags!.push({ tag: 'LF:tri:exclu' }, { tag: 'LF:tri:raison:Hors période' }));
+    edit('B', (x) => x.collections!.push(cols.screening_exclude));
+    edit('C', (x) => (x.tags = x.tags!.filter((t) => t.tag !== 'LF:tri:inclus')));
+    p.sync.pending = ['C'];
+    // Nouvelle référence ajoutée dans la sous-collection PubMed.
+    items.set('D', { ...item('D', 'Nouvelle étude', ['PUB']), version: ++version });
+
+    const { incoming, libraryVersion } = await fetchChanges(client, p);
+    const res = applyChanges(p, incoming, libraryVersion);
+    expect(res.changed.sort()).toEqual(['A', 'B']);
+    expect(res.added).toBe(1);
+    expect(res.project.screening.A).toMatchObject({ decision: 'exclude', reasons: ['Hors période'], note: 'ma note' });
+    expect(res.project.screening.B.decision).toBe('exclude');
+    expect(res.project.screening.C.decision).toBe('include');
+    expect(res.project.records.D.sources).toEqual(['PubMed']);
+    expect(res.project.sync.libraryVersion).toBe(version);
+
+    // Au prochain envoi, Zotero est nettoyé (une seule décision par étape).
+    const pushed = await pushToZotero(client, res.project, ['A', 'B']);
+    expect(pushed.failed).toEqual([]);
+    expect(items.get('A')!.data.tags!.map((t) => t.tag)).toEqual(['à lire', 'LF:tri:exclu', 'LF:tri:raison:Hors période']);
+    expect(items.get('B')!.data.collections).toEqual(['ERU', cols.screening_exclude]);
   });
 });

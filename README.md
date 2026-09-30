@@ -24,6 +24,12 @@ accents restent exactement comme dans Zotero.
 | **PRISMA 2020** | Diagramme calculé automatiquement (français ou anglais), avec colonne « autres méthodes », export **SVG et PNG** | — |
 | **Références** | Tableau filtrable (type de document, langue, source, années, nombre de pages, résumé, étiquettes Zotero…), décisions groupées, export **CSV** (s’ouvre avec les accents dans Excel) | — |
 
+**La synchronisation marche dans les deux sens** : vous pouvez aussi décider directement dans Zotero (pratique
+pendant la lecture des PDF). Ajoutez par exemple les étiquettes `LF:texte:exclu` et `LF:texte:raison:Mauvaise
+population`, ou glissez l’item dans la collection `2 – Texte intégral · Exclus` : LitFlow le lit toutes les
+45 secondes et met à jour ses décisions et le diagramme PRISMA. Les nouvelles références ajoutées aux collections
+sources sont aussi détectées.
+
 Vos autres collections et étiquettes Zotero ne sont **jamais** touchées : LitFlow ne gère que ce qu’il a créé
 (la collection `LitFlow – nom du projet` et les étiquettes qui commencent par `LF:`).
 

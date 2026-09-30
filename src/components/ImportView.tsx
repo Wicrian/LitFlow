@@ -4,6 +4,7 @@ import { useProject } from '../store';
 import { ZoteroClient, type ZCollection } from '../zotero/api';
 import { mergeImport } from '../zotero/mapping';
 import { importFromZotero } from '../zotero/sync';
+import { reconcileFromZotero } from '../zotero/pull';
 
 const KINDS: [SourceKind, string][] = [
   ['database', 'Base de données'],
@@ -59,10 +60,19 @@ export function ImportView({ onSettings, onDone }: { onSettings: () => void; onD
   const doImport = () =>
     run('Importation…', async () => {
       if (!client) return;
-      const { records, sources } = await importFromZotero(client, p, setBusy);
+      const { records, sources, sourceMap, libraryVersion } = await importFromZotero(client, p, setBusy);
       const { added, updated } = mergeImport(p, records);
-      update((cur) => mergeImport({ ...cur, sources }, records).project);
-      setResult(`${records.length} référence(s) lue(s) dans Zotero : ${added} nouvelle(s), ${updated} mise(s) à jour. Les titres et résumés sont conservés tels quels.`);
+      const { changed } = reconcileFromZotero(mergeImport(p, records).project, records);
+      update((cur) => {
+        const merged = mergeImport({ ...cur, sources }, records).project;
+        const rec = reconcileFromZotero(merged, records).project;
+        return { ...rec, sync: { ...rec.sync, sourceMap, libraryVersion, lastPull: new Date().toISOString() } };
+      });
+      setResult(
+        `${records.length} référence(s) lue(s) dans Zotero : ${added} nouvelle(s), ${updated} mise(s) à jour` +
+          (changed.length ? `, ${changed.length} décision(s) modifiée(s) dans Zotero reprise(s)` : '') +
+          '. Les titres et résumés sont conservés tels quels.',
+      );
     });
 
   // Arborescence des collections pour la liste déroulante.

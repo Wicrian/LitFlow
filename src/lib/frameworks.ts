@@ -173,7 +173,7 @@ export function newProject(name: string): Project {
     reasons: structuredClone(DEFAULT_REASONS),
     askReason: { include: true, exclude: true, maybe: true },
     manualCounts: { automationExcluded: 0, otherRemoved: 0, otherMethodsIdentified: [] },
-    sync: { auto: true, tagPrefix: 'LF', writeNotes: true, pending: [], lastSync: null, lastError: null },
+    sync: { auto: true, tagPrefix: 'LF', writeNotes: true, pending: [], lastSync: null, lastError: null, libraryVersion: null, sourceMap: {}, lastPull: null },
   };
 }
 

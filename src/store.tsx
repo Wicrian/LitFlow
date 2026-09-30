@@ -5,6 +5,7 @@ import type { Decision, Project, Settings, Stage, StageDecision } from './types'
 import { saveProject } from './lib/storage';
 import { ZoteroClient } from './zotero/api';
 import { pushToZotero } from './zotero/sync';
+import { applyChanges, fetchChanges } from './zotero/pull';
 
 export type SyncStatus = { state: 'off' | 'idle' | 'pending' | 'syncing' | 'error'; message?: string; done?: number; total?: number };
 
@@ -20,6 +21,10 @@ interface Ctx {
   markDirty: (keys: string[]) => void;
   syncNow: (keys?: string[]) => Promise<void>;
   syncStatus: SyncStatus;
+  pullNow: () => Promise<void>;
+  /** Résumé de la dernière lecture de changements venus de Zotero. */
+  pullInfo: { changed: number; added: number } | null;
+  clearPullInfo: () => void;
 }
 
 const ProjectContext = createContext<Ctx | null>(null);
@@ -36,6 +41,8 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
   ref.current = project;
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({ state: 'idle' });
   const syncing = useRef(false);
+  const pulling = useRef(false);
+  const [pullInfo, setPullInfo] = useState<{ changed: number; added: number } | null>(null);
   const dirtyDuringSync = useRef(new Set<string>());
 
   const client = useMemo(
@@ -128,6 +135,41 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
     [client],
   );
 
+  // Lecture des changements faits dans Zotero (étiquettes, collections, nouvelles références).
+  const pullNow = useCallback(async () => {
+    if (!client || syncing.current || pulling.current) return;
+    const start = ref.current;
+    if (start.sync.libraryVersion === null) return;
+    pulling.current = true;
+    try {
+      const { incoming, libraryVersion } = await fetchChanges(client, start);
+      if (!incoming.length) {
+        setProject((cur) => ({ ...cur, sync: { ...cur.sync, libraryVersion: libraryVersion ?? cur.sync.libraryVersion } }));
+        return;
+      }
+      const preview = applyChanges(ref.current, incoming, libraryVersion);
+      setProject((cur) => applyChanges(cur, incoming, libraryVersion).project);
+      if (preview.changed.length || preview.added) setPullInfo({ changed: preview.changed.length, added: preview.added });
+    } catch (e) {
+      setSyncStatus({ state: 'error', message: `Lecture depuis Zotero : ${e instanceof Error ? e.message : String(e)}` });
+    } finally {
+      pulling.current = false;
+    }
+  }, [client]);
+
+  // À l'ouverture puis toutes les 45 secondes quand la page est visible.
+  useEffect(() => {
+    if (!client) return;
+    void pullNow();
+    const t = setInterval(() => document.visibilityState === 'visible' && void pullNow(), 45000);
+    const onVisible = () => document.visibilityState === 'visible' && void pullNow();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [client, pullNow]);
+
   // Synchronisation automatique quelques secondes après la dernière décision.
   useEffect(() => {
     if (!client || !project.sync.auto || !project.sync.pending.length) return;
@@ -141,6 +183,6 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
       ? { state: 'pending', message: `${project.sync.pending.length} modification(s) à envoyer` }
       : syncStatus;
 
-  const value: Ctx = { project, settings, client, update, decide, rememberReason, markDirty, syncNow, syncStatus: status };
+  const value: Ctx = { project, settings, client, update, decide, rememberReason, markDirty, syncNow, syncStatus: status, pullNow, pullInfo, clearPullInfo: () => setPullInfo(null) };
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
 }
