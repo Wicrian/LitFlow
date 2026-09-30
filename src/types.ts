@@ -134,6 +134,19 @@ export interface Project {
     otherMethodsIdentified: { name: string; n: number }[];
   };
 
+  /** Assistant IA local (facultatif). */
+  ai: {
+    enabled: boolean;
+    /** Montrer la suggestion avant ma décision, seulement après, ou jamais. */
+    show: 'before' | 'after' | 'never';
+    /** L'IA apprend de mes décisions déjà prises. */
+    learn: boolean;
+    /** Seuil de similarité pour les doublons proposés par l'IA (0,80 à 0,99). */
+    dupThreshold: number;
+    suggestions: Record<string, { decision: Decision; score: number; reason: string; mode: 'criteria' | 'learned'; at: string }>;
+    lastRun: string | null;
+  };
+
   /** Réglages de synchronisation. */
   sync: {
     auto: boolean;

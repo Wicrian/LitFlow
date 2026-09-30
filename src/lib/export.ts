@@ -18,7 +18,7 @@ export function recordsCsv(p: Project): string {
   const head = [
     'Clé Zotero', 'Titre', 'Auteurs', 'Année', 'Type', 'Publication', 'Langue', 'DOI', 'Sources',
     'Doublon de', 'Tri', 'Raisons (tri)', 'Note (tri)', 'Introuvable',
-    'Texte intégral', 'Raisons (texte intégral)', 'Note (texte intégral)',
+    'Texte intégral', 'Raisons (texte intégral)', 'Note (texte intégral)', 'Suggestion IA (tri)', 'Raison IA',
   ];
   const rows = Object.values(p.records).map((r) => {
     const s = p.screening[r.key];
@@ -28,6 +28,7 @@ export function recordsCsv(p: Project): string {
       r.doi, r.sources.join(' | '), p.duplicates[r.key] ?? '',
       s ? LABEL[s.decision] : '', s?.reasons.join(' | ') ?? '', s?.note ?? '', r.key in p.notRetrieved ? 'oui' : '',
       f ? LABEL[f.decision] : '', f?.reasons.join(' | ') ?? '', f?.note ?? '',
+      p.ai.suggestions[r.key] ? LABEL[p.ai.suggestions[r.key].decision] : '', p.ai.suggestions[r.key]?.reason ?? '',
     ];
   });
   return '﻿' + [head, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n');

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { runAiDuplicates } from '../ai/run';
+import { AiProgressText, useAiProgress } from './AiProgress';
 import type { RecordItem } from '../types';
 import { findDuplicateGroups, type DuplicateGroup } from '../lib/dedup';
 import { authorsShort } from '../lib/text';
@@ -9,12 +11,15 @@ const REASON: Record<DuplicateGroup['reason'], string> = {
   doi: 'Même DOI',
   title: 'Même titre',
   similar: 'Titres très proches (même année, même auteur)',
+  ai: 'IA : titres de même sens (traduction, prépublication…)',
 };
 
 export function Dedup({ onDone }: { onDone: () => void }) {
   const { project: p, update, markDirty } = useProject();
   const [keepChoice, setKeepChoice] = useState<Record<string, string>>({});
   const [showConfirmed, setShowConfirmed] = useState(false);
+  const [aiGroups, setAiGroups] = useState<(DuplicateGroup & { score: number })[] | null>(null);
+  const ai = useAiProgress();
 
   const groups = useMemo(
     () =>
@@ -46,6 +51,11 @@ export function Dedup({ onDone }: { onDone: () => void }) {
   };
 
   const doiGroups = groups.filter((g) => g.reason === 'doi');
+  const ruleIds = new Set(groups.map((g) => g.id));
+  const visibleAi = (aiGroups ?? []).filter(
+    (g) => !ruleIds.has(g.id) && !p.notDuplicateGroups.includes(g.id) && g.keys.filter((k) => !(k in p.duplicates)).length > 1,
+  );
+  const allGroups: (DuplicateGroup & { score?: number })[] = [...groups, ...visibleAi];
   const confirmed = Object.entries(p.duplicates);
 
   return (
@@ -81,12 +91,47 @@ export function Dedup({ onDone }: { onDone: () => void }) {
         )}
       </section>
 
-      {groups.map((g) => {
+      {p.ai.enabled && (
+        <section className="panel stack">
+          <div className="row">
+            <strong>🤖 Doublons « de sens » avec l’IA locale</strong>
+            <span className="spacer" />
+            <label className="row small">
+              Seuil
+              <input
+                type="range"
+                min={0.8}
+                max={0.99}
+                step={0.01}
+                value={p.ai.dupThreshold}
+                onChange={(e) => update((cur) => ({ ...cur, ai: { ...cur.ai, dupThreshold: +e.target.value } }))}
+              />
+              {p.ai.dupThreshold.toFixed(2)}
+            </label>
+            <button
+              className="btn"
+              disabled={ai.running}
+              onClick={() => ai.run(async (onProgress) => setAiGroups(await runAiDuplicates(p, onProgress)))}
+            >
+              {aiGroups ? 'Relancer' : 'Chercher'}
+            </button>
+          </div>
+          <p className="small muted">
+            L’IA compare le sens des titres (même traduits en anglais, ou avec une formulation différente). Elle ne fait que
+            proposer : vérifiez chaque groupe. Seuil plus bas = plus de propositions, mais plus d’erreurs.
+          </p>
+          <AiProgressText state={ai} />
+          {aiGroups && <div className="small">{visibleAi.length} groupe(s) proposé(s) par l’IA en plus des règles classiques.</div>}
+        </section>
+      )}
+
+      {allGroups.map((g) => {
         const keep = keepChoice[g.id] ?? g.suggestedKeep;
         return (
           <section key={g.id} className="panel stack">
             <div className="row">
               <span className="badge">{REASON[g.reason]}</span>
+              {g.score !== undefined && <span className="small muted">similarité {g.score.toFixed(2)}</span>}
               <span className="spacer" />
               <button className="btn small" onClick={() => dismiss(g)}>
                 Ce ne sont pas des doublons
@@ -96,7 +141,7 @@ export function Dedup({ onDone }: { onDone: () => void }) {
               </button>
             </div>
             <div className="dup-group">
-              {g.keys.map((k) => (
+              {g.keys.filter((k) => !(k in p.duplicates)).map((k) => (
                 <DupItem key={k} r={p.records[k]} keep={k === keep} onClick={() => setKeepChoice({ ...keepChoice, [g.id]: k })} />
               ))}
             </div>

@@ -76,12 +76,33 @@ par exemple `LF:tri:raison:Mauvaise population`.
 | `Z` | Annuler la dernière décision |
 | `1`…`9` | Choisir une raison · `Entrée` valider · `Échap` passer |
 
+## Assistant IA local (facultatif)
+
+À activer dans **Protocole › Assistant IA local**. Un petit modèle multilingue (*multilingual-e5-small*, environ
+120 Mo) est téléchargé **une seule fois** puis tourne dans le navigateur : vos références ne sont envoyées à aucun
+service d’IA.
+
+- **Doublons « de sens »** : repère des doublons que les règles manquent (titre traduit, prépublication et
+  article publié…). Seuil réglable ; chaque groupe reste à confirmer.
+- **Deuxième avis au tri** : propose inclure / exclure / incertain avec une raison lisible, d’abord en comparant
+  le titre et le résumé à vos critères (PICO, inclusion, exclusion), puis en **apprenant de vos décisions**
+  (« Ressemble à une référence que vous avez exclue (Hors sujet) : … »).
+- **Accord avec l’IA** : pourcentage d’accord et **kappa de Cohen**, calculés uniquement sur les décisions prises
+  après la suggestion, et filtre « Revoir les désaccords ».
+- La suggestion peut s’afficher avant votre décision, seulement après (plus rigoureux : évite d’être influencé·e),
+  ou jamais.
+
+⚠️ L’IA compare le sens des textes ; elle ne « comprend » pas vos critères comme une personne et se trompe
+souvent. Elle ne remplace pas un second évaluateur humain dans une revue systématique publiée ; mentionnez son
+usage dans votre méthode.
+
 ## Confidentialité
 
 - LitFlow n’a **pas de serveur** : c’est une page web qui fonctionne entièrement dans votre navigateur.
 - Vos projets sont enregistrés dans le navigateur (IndexedDB). Utilisez **Références › Sauvegarder le projet**
   pour changer d’ordinateur ou partager.
 - La clé API Zotero est stockée dans le navigateur et n’est envoyée qu’à `api.zotero.org`.
+- L’assistant IA télécharge son programme (jsDelivr) et son modèle (Hugging Face) ; aucun texte n’est envoyé.
 
 ## Travailler en équipe
 
@@ -109,6 +130,9 @@ src/
   zotero/api.ts         Client de l’API Web Zotero v3
   zotero/sync.ts        Import depuis Zotero et écriture des collections/étiquettes/notes
   zotero/mapping.ts     Conversion item Zotero → référence (sans modifier le texte)
+  zotero/pull.ts        Lecture des changements faits dans Zotero (sync dans les deux sens)
+  ai/                   Assistant IA local (modèle dans un Web Worker, logique testée)
+  lib/agreement.ts      Kappa de Cohen
   lib/dedup.ts          Détection des doublons
   lib/prisma.ts         Calcul des chiffres PRISMA 2020
   lib/filters.ts        Filtres et tris sur les métadonnées
@@ -127,7 +151,8 @@ Le dossier `dist/` produit par `npm run build` peut aussi être déposé sur n�
 
 ### Feuille de route (idées)
 
-- [ ] Double tri en aveugle, calcul du kappa de Cohen, résolution des conflits
+- [ ] Double tri en aveugle entre personnes, résolution des conflits (le kappa existe déjà pour l’IA)
+- [ ] Assistant IA : explications rédigées par un modèle de langage local (Ollama), en option
 - [ ] Grille d’extraction de données personnalisable, export tableur
 - [ ] Évaluation de la qualité / du risque de biais (CASP, MMAT, RoB 2…)
 - [ ] Interface en anglais et autres langues

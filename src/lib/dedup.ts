@@ -1,7 +1,7 @@
 import type { RecordItem } from '../types';
 import { normalizeDoi, normalizeForCompare, similarity } from './text';
 
-export type MatchReason = 'doi' | 'title' | 'similar';
+export type MatchReason = 'doi' | 'title' | 'similar' | 'ai';
 
 export interface DuplicateGroup {
   /** Identifiant stable du groupe (clés triées). */
@@ -46,7 +46,7 @@ export function findDuplicateGroups(records: RecordItem[], threshold = 0.92): Du
     parent.set(k, p);
     return p;
   };
-  const rank: Record<MatchReason, number> = { doi: 0, title: 1, similar: 2 };
+  const rank: Record<MatchReason, number> = { doi: 0, title: 1, similar: 2, ai: 3 };
   const union = (a: string, b: string, reason: MatchReason) => {
     const ra = find(a);
     const rb = find(b);

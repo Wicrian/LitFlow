@@ -173,6 +173,7 @@ export function newProject(name: string): Project {
     reasons: structuredClone(DEFAULT_REASONS),
     askReason: { include: true, exclude: true, maybe: true },
     manualCounts: { automationExcluded: 0, otherRemoved: 0, otherMethodsIdentified: [] },
+    ai: { enabled: false, show: 'before', learn: true, dupThreshold: 0.93, suggestions: {}, lastRun: null },
     sync: { auto: true, tagPrefix: 'LF', writeNotes: true, pending: [], lastSync: null, lastError: null, libraryVersion: null, sourceMap: {}, lastPull: null },
   };
 }
@@ -185,6 +186,7 @@ export function upgradeProject(p: Project): Project {
     ...p,
     manualCounts: { ...base.manualCounts, ...p.manualCounts },
     sync: { ...base.sync, ...p.sync },
+    ai: { ...base.ai, ...p.ai },
     askReason: { ...base.askReason, ...p.askReason },
     reasons: { ...base.reasons, ...p.reasons },
   };

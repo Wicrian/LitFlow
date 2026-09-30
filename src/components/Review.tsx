@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { Decision, RecordItem, Stage, StageDecision } from '../types';
+import type { Decision, Project, RecordItem, Stage, StageDecision } from '../types';
 import { applyFilters, emptyFilters, sortRecords, type Filters, type SortKey } from '../lib/filters';
 import { fulltextKeys, screeningKeys } from '../lib/prisma';
 import { authorsShort, highlight, splitKeywords } from '../lib/text';
@@ -7,6 +7,9 @@ import { useProject } from '../store';
 import { zoteroOpenPdfLink, zoteroSelectLink, type ZItem } from '../zotero/api';
 import { itemTypeLabel } from '../zotero/mapping';
 import { FilterBar } from './FilterBar';
+import { AiProgressText, useAiProgress } from './AiProgress';
+import { runSuggestions } from '../ai/run';
+import { cohenKappa, kappaLabel } from '../lib/agreement';
 
 export const DECISION_UI: Record<Decision, { label: string; icon: string; key: string }> = {
   exclude: { label: 'Exclure', icon: '✕', key: '←' },
@@ -30,11 +33,16 @@ export function Review({ stage }: { stage: Stage }) {
   const [sheet, setSheet] = useState<{ key: string; decision: Decision } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [aiDisagree, setAiDisagree] = useState(false);
 
   const decisions = p[stage];
   const baseKeys = useMemo(() => (stage === 'screening' ? screeningKeys(p) : fulltextKeys(p)), [stage, p]);
   const pool = useMemo(() => baseKeys.map((k) => p.records[k]), [baseKeys, p.records]);
-  const queue = useMemo(() => sortRecords(p, applyFilters(p, pool, filters), sort, 1).map((r) => r.key), [p, pool, filters, sort]);
+  const queue = useMemo(() => {
+    let rs = applyFilters(p, pool, filters);
+    if (aiDisagree) rs = rs.filter((r) => isAiDisagreement(p, r.key));
+    return sortRecords(p, rs, sort, 1).map((r) => r.key);
+  }, [p, pool, filters, sort, aiDisagree]);
 
   const cur = currentKey && queue.includes(currentKey) ? currentKey : queue[0] ?? null;
   const idx = cur ? queue.indexOf(cur) : -1;
@@ -255,6 +263,15 @@ export function Review({ stage }: { stage: Stage }) {
 
       <aside className="stack">
         <Sidebar stage={stage} counts={counts} total={total} history={history} onJump={(k) => setCurrentKey(k)} />
+        {stage === 'screening' && p.ai.enabled && (
+          <AiPanel
+            disagreeOnly={aiDisagree}
+            onDisagreeOnly={(v) => {
+              setAiDisagree(v);
+              if (v) setFilters({ ...filters, screening: 'all' });
+            }}
+          />
+        )}
       </aside>
 
       {sheet && (
@@ -363,6 +380,7 @@ function RecordCard({
           </span>
         )}
         {notRetrieved && <span className="badge">Texte introuvable</span>}
+        {!showLinks && <AiBadge recordKey={r.key} decided={!!decision} />}
         <span className="badge">{itemTypeLabel(r.itemType)}</span>
         {r.sources.map((s) => (
           <span key={s} className="badge">
@@ -666,6 +684,85 @@ export function ReasonSheet({
             Passer <kbd>Échap</kbd>
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Assistant IA
+
+/** Suggestion faite avant la décision humaine, et différente d'elle. */
+function isAiDisagreement(p: Project, key: string): boolean {
+  const s = p.ai.suggestions[key];
+  const d = p.screening[key];
+  return !!s && !!d && s.decision !== d.decision;
+}
+
+function AiBadge({ recordKey, decided }: { recordKey: string; decided: boolean }) {
+  const { project: p } = useProject();
+  const s = p.ai.suggestions[recordKey];
+  if (!p.ai.enabled || !s || p.ai.show === 'never' || (p.ai.show === 'after' && !decided)) return null;
+  return (
+    <span className={`badge ${s.decision}`} title={`${s.reason}\n(${s.mode === 'learned' ? 'appris de vos décisions' : 'comparaison avec vos critères'}, score ${s.score.toFixed(2)})`}>
+      🤖 IA : {DECISION_UI[s.decision].label.toLowerCase()} ?{s.reason ? ` — ${s.reason}` : ''}
+    </span>
+  );
+}
+
+function AiPanel({ disagreeOnly, onDisagreeOnly }: { disagreeOnly: boolean; onDisagreeOnly: (v: boolean) => void }) {
+  const { project: p, update } = useProject();
+  const ai = useAiProgress();
+  const keys = screeningKeys(p);
+  const suggested = keys.filter((k) => p.ai.suggestions[k]);
+  const pending = keys.filter((k) => !p.screening[k] && !p.ai.suggestions[k]).length;
+  // Accord mesuré seulement sur les décisions prises APRÈS la suggestion.
+  const pairs = keys
+    .filter((k) => p.ai.suggestions[k] && p.screening[k] && (p.ai.suggestions[k].at ?? '') <= p.screening[k].at)
+    .map((k) => [p.ai.suggestions[k].decision, p.screening[k].decision] as [Decision, Decision]);
+  const agreement = cohenKappa(pairs);
+  const disagreements = keys.filter((k) => isAiDisagreement(p, k)).length;
+  const decidedCount = keys.filter((k) => p.screening[k] && p.screening[k].decision !== 'maybe').length;
+
+  return (
+    <div className="panel stack small">
+      <strong>🤖 Assistant IA (local)</strong>
+      <div className="muted">
+        {suggested.length} suggestion(s) · {pending} sans suggestion
+        {p.ai.learn && decidedCount < 6 && <> · l’IA apprendra de vos décisions après ~3 inclusions et 3 exclusions</>}
+      </div>
+      <button
+        className="btn small"
+        disabled={ai.running}
+        onClick={() =>
+          ai.run(async (onProgress) => {
+            const suggestions = await runSuggestions(p, onProgress);
+            update((cur) => ({ ...cur, ai: { ...cur.ai, suggestions: { ...cur.ai.suggestions, ...suggestions }, lastRun: new Date().toISOString() } }));
+          })
+        }
+      >
+        {suggested.length ? 'Mettre à jour les suggestions' : 'Lancer les suggestions'}
+      </button>
+      <AiProgressText state={ai} />
+      {agreement.n > 0 && (
+        <div>
+          Accord avec l’IA : <strong>{Math.round(agreement.observed * 100)} %</strong> sur {agreement.n} décision(s)
+          {agreement.kappa !== null && (
+            <>
+              {' '}· kappa = {agreement.kappa.toFixed(2)} ({kappaLabel(agreement.kappa)})
+            </>
+          )}
+        </div>
+      )}
+      {disagreements > 0 && (
+        <label className="row">
+          <input type="checkbox" checked={disagreeOnly} onChange={(e) => onDisagreeOnly(e.target.checked)} />
+          Revoir les {disagreements} désaccord(s) avec l’IA
+        </label>
+      )}
+      <div className="muted">
+        L’IA compare le sens des textes à vos critères et à vos décisions. Elle se trompe souvent : c’est un deuxième avis,
+        pas une décision.
       </div>
     </div>
   );

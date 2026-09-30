@@ -152,6 +152,47 @@ export function Protocol() {
       </section>
 
       <section className="panel stack">
+        <h2>🤖 Assistant IA local (facultatif)</h2>
+        <p className="small muted">
+          Un petit modèle d’IA multilingue (environ 120 Mo, téléchargé une seule fois) tourne <strong>dans votre
+          navigateur</strong> : vos références ne sont envoyées à aucun service. Il peut repérer des doublons que les règles
+          classiques manquent (titre traduit, prépublication…) et proposer une décision de tri avec une raison, à partir de
+          vos critères ci-dessus puis de vos propres décisions. Il joue le rôle d’un deuxième avis, sans jamais décider à
+          votre place.
+        </p>
+        <label className="row">
+          <input type="checkbox" checked={p.ai.enabled} onChange={(e) => set('ai', { ...p.ai, enabled: e.target.checked })} />
+          Activer l’assistant IA
+        </label>
+        {p.ai.enabled && (
+          <>
+            <label className="field" style={{ maxWidth: 520 }}>
+              <span>Afficher la suggestion de l’IA pendant le tri</span>
+              <select value={p.ai.show} onChange={(e) => set('ai', { ...p.ai, show: e.target.value as typeof p.ai.show })}>
+                <option value="before">Avant ma décision (l’IA comme pré-tri)</option>
+                <option value="after">Après ma décision seulement (évite d’être influencé·e : plus rigoureux)</option>
+                <option value="never">Jamais (seulement la mesure d’accord)</option>
+              </select>
+            </label>
+            <label className="row">
+              <input type="checkbox" checked={p.ai.learn} onChange={(e) => set('ai', { ...p.ai, learn: e.target.checked })} />
+              L’IA apprend de mes décisions déjà prises (recommandé)
+            </label>
+            {Object.keys(p.ai.suggestions).length > 0 && (
+              <div>
+                <button
+                  className="btn small danger"
+                  onClick={() => confirm('Effacer toutes les suggestions de l’IA ?') && set('ai', { ...p.ai, suggestions: {}, lastRun: null })}
+                >
+                  Effacer les suggestions ({Object.keys(p.ai.suggestions).length})
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      <section className="panel stack">
         <h2>Synchronisation avec Zotero</h2>
         <label className="row">
           <input type="checkbox" checked={p.sync.auto} onChange={(e) => set('sync', { ...p.sync, auto: e.target.checked })} />
