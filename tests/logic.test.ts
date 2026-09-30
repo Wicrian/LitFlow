@@ -83,3 +83,15 @@ describe('synchronisation Zotero', () => {
     expect(noteHtml(p, 'DEMO0003')).toBeNull();
   });
 });
+
+describe('type de source', () => {
+  it('ne confond pas les bases de données avec les autres méthodes', async () => {
+    const { guessKind } = await import('../src/zotero/sync');
+    for (const n of ['Web of Science', 'Google Scholar', 'PubMed', 'Cairn', 'Érudit', 'Scopus', 'CINAHL', 'PsycINFO', 'Sociological Abstracts'])
+      expect(guessKind(n), n).toBe('database');
+    for (const n of ['Recherche par citations', 'Boule de neige', 'Sites web', 'Littérature grise', 'Grey literature'])
+      expect(guessKind(n), n).toBe('other');
+    expect(guessKind('ClinicalTrials.gov')).toBe('register');
+    expect(guessKind('PROSPERO')).toBe('register');
+  });
+});

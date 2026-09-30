@@ -304,9 +304,17 @@ export async function importFromZotero(
   return { records, sources, sourceMap, libraryVersion: client.libraryVersion };
 }
 
-function guessKind(name: string): Project['sources'][number]['kind'] {
+/**
+ * Devine le type d'une source d'après le nom de sa sous-collection. Prudent :
+ * en cas de doute c'est une base de données (Web of Science, Google Scholar…),
+ * modifiable ensuite dans l'onglet Identification.
+ */
+export function guessKind(name: string): Project['sources'][number]['kind'] {
   const n = name.toLowerCase();
-  if (/(clinicaltrials|prospero|registre|register|ictrp|osf)/.test(n)) return 'register';
-  if (/(citation|boule de neige|snowball|référence|reference|site|web|google|manuel|expert|littérature grise|grey)/.test(n)) return 'other';
+  if (/\b(clinicaltrials|prospero|registres?|registers?|registry|ictrp)\b/.test(n)) return 'register';
+  if (
+    /(citations?|boule de neige|snowball|liste de références|reference lists?|recherche manuelle|hand ?search|sites? web|websites?|expert|littérature grise|grey literature|gray literature)/.test(n)
+  )
+    return 'other';
   return 'database';
 }

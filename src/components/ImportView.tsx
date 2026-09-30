@@ -183,7 +183,7 @@ export function ImportView({ onSettings, onDone }: { onSettings: () => void; onD
         <section className="panel stack">
           <h2>Sources ({total} références)</h2>
           <p className="small muted">
-            Indiquez le type de chaque source : les « autres méthodes » (recherche par citations, sites web…) apparaissent dans
+            <strong>Vérifiez le type de chaque source.</strong> Les « autres méthodes » (recherche par citations, sites web…) apparaissent dans
             la colonne de droite du diagramme PRISMA 2020 et passent directement à l’évaluation du texte intégral.
           </p>
           <table>

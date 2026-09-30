@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Decision, Project, RecordItem, Stage, StageDecision } from '../types';
 import { applyFilters, emptyFilters, sortRecords, type Filters, type SortKey } from '../lib/filters';
-import { fulltextKeys, screeningKeys } from '../lib/prisma';
+import { fulltextKeys, recordKind, screeningKeys } from '../lib/prisma';
 import { authorsShort, highlight, splitKeywords } from '../lib/text';
 import { useProject } from '../store';
 import { zoteroOpenPdfLink, zoteroSelectLink, type ZItem } from '../zotero/api';
@@ -133,6 +133,7 @@ export function Review({ stage }: { stage: Stage }) {
   });
 
   const total = baseKeys.length;
+  const otherCount = stage === 'fulltext' ? baseKeys.filter((k) => recordKind(p, p.records[k]) === 'other').length : 0;
   const done = total - counts.none;
   const includeWords = [...splitKeywords(p.highlightInclude), ...p.framework.elements.flatMap((el) => splitKeywords(el.keywords))];
   const excludeWords = splitKeywords(p.highlightExclude);
@@ -186,6 +187,13 @@ export function Review({ stage }: { stage: Stage }) {
           )}
         </div>
 
+        {stage === 'fulltext' && otherCount > 0 && (
+          <div className="notice small">
+            {otherCount} référence(s) de ce total viennent de sources de type « autre méthode » (recherche par citations,
+            sites web…) : selon PRISMA 2020, elles passent directement au texte intégral, sans tri titre-résumé. Si c’est
+            une erreur, changez le type de la source dans l’onglet <strong>2. Identification</strong> (tableau « Sources »).
+          </div>
+        )}
         {total === 0 ? (
           <div className="panel muted">
             {stage === 'screening'
