@@ -20,11 +20,11 @@ export function Home({ projects, settings, onOpen, onDelete, onSettings }: Props
   return (
     <main>
       <section className="hero">
-        <h1>LitFlow</h1>
+        <div className="eyebrow">Revue de littérature libre et gratuite</div>
+        <h1>Bonjour 👋 Prêt·e à trier ?</h1>
         <p className="muted">
-          Revue systématique de littérature, libre et gratuite, directement connectée à votre bibliothèque Zotero.
-          <br />
-          Vos titres, résumés et accents restent intacts : rien n’est réimporté, tout est synchronisé.
+          LitFlow est directement connecté à votre bibliothèque Zotero : vos titres, résumés et accents restent intacts,
+          rien n’est réimporté, tout est synchronisé.
         </p>
       </section>
 
@@ -99,6 +99,7 @@ export function Home({ projects, settings, onOpen, onDelete, onSettings }: Props
           const n = Object.keys(p.records).length;
           return (
             <div key={p.id} className="project-card" onClick={() => onOpen(p)}>
+              <div className="avatar">{p.name.trim().charAt(0).toUpperCase() || 'L'}</div>
               <div style={{ flex: 1 }}>
                 <strong>{p.name}</strong>
                 <div className="small muted">

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ClipboardList, Copy, FileText, GitFork, Home as HomeIcon, Layers, Library, RefreshCw, Settings as SettingsIcon, Sparkles, Table2 } from 'lucide-react';
 import type { Project, Settings } from './types';
 import { deleteProject, listProjects, loadSettings, saveProject, saveSettings } from './lib/storage';
 import { ProjectProvider, useProject } from './store';
@@ -42,14 +43,15 @@ export default function App() {
           />
         </ProjectProvider>
       ) : (
-        <>
-          <header className="topbar">
-            <Brand onClick={() => undefined} />
-            <span className="spacer" />
-            <button className="btn" onClick={() => setShowSettings(true)}>
-              ⚙️ Connexion Zotero
-            </button>
-          </header>
+        <Frame
+          rail={
+            <>
+              <RailItem icon={<HomeIcon />} label="Accueil" active onClick={() => undefined} />
+              <span className="spacer" />
+              <RailItem icon={<SettingsIcon />} label="Zotero" onClick={() => setShowSettings(true)} />
+            </>
+          }
+        >
           <Home
             projects={projects}
             settings={settings}
@@ -60,7 +62,7 @@ export default function App() {
             }}
             onSettings={() => setShowSettings(true)}
           />
-        </>
+        </Frame>
       )}
       {showSettings && (
         <SettingsDialog
@@ -76,13 +78,45 @@ export default function App() {
   );
 }
 
-function Brand({ onClick }: { onClick: () => void }) {
+/** Cadre commun : grand panneau arrondi avec une barre d'icônes à gauche. */
+function Frame({ rail, children, onLogo }: { rail: ReactNode; children: ReactNode; onLogo?: () => void }) {
   return (
-    <span className="brand" onClick={onClick}>
-      <img src="./favicon.svg" alt="" /> LitFlow
-    </span>
+    <div className="app">
+      <div className="frame">
+        <aside className="rail">
+          <button className="logo" onClick={onLogo} title="LitFlow – accueil">
+            <Sparkles />
+          </button>
+          {rail}
+        </aside>
+        <div className="content">{children}</div>
+      </div>
+    </div>
   );
 }
+
+function RailItem({ icon, label, count, active, onClick, alert }: { icon: ReactNode; label: string; count?: string; active?: boolean; alert?: boolean; onClick: () => void }) {
+  return (
+    <button className={`rail-item ${active ? 'active' : ''}`} onClick={onClick} title={label}>
+      <span className="rail-icon">
+        {icon}
+        {alert && <span className="rail-alert" />}
+      </span>
+      <span className="rail-label">{label}</span>
+      {count && <span className="rail-count">{count}</span>}
+    </button>
+  );
+}
+
+const VIEWS: Record<View, { label: string; title: string; subtitle: string; icon: ReactNode }> = {
+  protocol: { label: 'Protocole', title: 'Protocole', subtitle: 'Question, cadre, critères et raisons de votre revue', icon: <ClipboardList /> },
+  import: { label: 'Identification', title: 'Identification', subtitle: 'Vos références lues directement dans Zotero', icon: <Library /> },
+  dedup: { label: 'Doublons', title: 'Doublons', subtitle: 'Repérer et écarter les notices en double', icon: <Copy /> },
+  screening: { label: 'Tri', title: 'Tri titre-résumé', subtitle: 'Glissez : à droite inclure, à gauche exclure, en haut incertain', icon: <Layers /> },
+  fulltext: { label: 'Texte intégral', title: 'Texte intégral', subtitle: 'Lisez dans Zotero, décidez ici ou par étiquettes', icon: <FileText /> },
+  records: { label: 'Références', title: 'Références', subtitle: 'Toutes vos références, filtrables et exportables', icon: <Table2 /> },
+  prisma: { label: 'PRISMA', title: 'Diagramme PRISMA 2020', subtitle: 'Calculé automatiquement à partir de vos décisions', icon: <GitFork /> },
+};
 
 function ProjectShell({ onHome, onSettings }: { onHome: () => void; onSettings: () => void }) {
   const { project, syncStatus, syncNow, client, pullNow, pullInfo, clearPullInfo } = useProject();
@@ -99,22 +133,19 @@ function ProjectShell({ onHome, onSettings }: { onHome: () => void; onSettings: 
     [project.records, project.duplicates, project.notDuplicateGroups],
   );
 
-  const tabs: [View, string, string?][] = [
-    ['protocol', '1. Protocole'],
-    ['import', '2. Identification'],
-    ['dedup', '3. Doublons', dupOpen ? `${dupOpen} à vérifier` : undefined],
-    ['screening', '4. Tri titre-résumé', `${screen.filter((k) => project.screening[k]).length}/${screen.length}`],
-    ['fulltext', '5. Texte intégral', `${ft.filter((k) => project.fulltext[k] || k in project.notRetrieved).length}/${ft.length}`],
-    ['records', 'Références', String(Object.keys(project.records).length)],
-    ['prisma', 'PRISMA'],
-  ];
+  const counts: Partial<Record<View, string>> = {
+    dedup: dupOpen ? String(dupOpen) : undefined,
+    screening: `${screen.filter((k) => project.screening[k]).length}/${screen.length}`,
+    fulltext: `${ft.filter((k) => project.fulltext[k] || k in project.notRetrieved).length}/${ft.length}`,
+    records: String(Object.keys(project.records).length),
+  };
 
   const dotClass = { off: 'off', idle: '', pending: 'pending', syncing: 'pending', error: 'error' }[syncStatus.state];
   const syncLabel =
     syncStatus.state === 'off'
       ? project.library
         ? 'Zotero non connecté'
-        : 'Hors ligne (sans Zotero)'
+        : 'Sans Zotero'
       : syncStatus.state === 'syncing'
         ? `${syncStatus.message ?? ''} ${syncStatus.total ? `${syncStatus.done}/${syncStatus.total}` : ''}`
         : syncStatus.state === 'error'
@@ -123,39 +154,54 @@ function ProjectShell({ onHome, onSettings }: { onHome: () => void; onSettings: 
             ? syncStatus.message
             : 'Synchronisé avec Zotero';
 
+  const v = VIEWS[view];
   return (
-    <>
-      <header className="topbar">
-        <Brand onClick={onHome} />
-        <strong className="hide-mobile" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.name}</strong>
+    <Frame
+      onLogo={onHome}
+      rail={
+        <>
+          <nav className="rail-nav">
+            {(Object.keys(VIEWS) as View[]).map((id) => (
+              <RailItem
+                key={id}
+                icon={VIEWS[id].icon}
+                label={VIEWS[id].label}
+                count={counts[id]}
+                alert={id === 'dedup' && dupOpen > 0}
+                active={view === id}
+                onClick={() => setView(id)}
+              />
+            ))}
+          </nav>
+          <span className="spacer" />
+          <RailItem icon={<HomeIcon />} label="Mes revues" onClick={onHome} />
+          <RailItem icon={<SettingsIcon />} label="Zotero" onClick={onSettings} />
+        </>
+      }
+    >
+      <header className="page-head">
+        <div className="page-title">
+          <div className="eyebrow">{project.name}</div>
+          <h1>{v.title}</h1>
+          <p className="muted hide-mobile">{v.subtitle}</p>
+        </div>
         <span className="spacer" />
-        <span className="row small muted" title={syncStatus.message}>
+        <span className="pill" title={syncStatus.message}>
           <span className={`sync-dot ${dotClass}`} /> <span className="hide-mobile">{syncLabel}</span>
         </span>
         {client && (
           <button
-            className="btn small"
+            className="btn dark"
             title="Envoyer les décisions vers Zotero et lire les changements faits dans Zotero"
             onClick={async () => {
               await syncNow();
               await pullNow();
             }}
           >
-            ⟳ <span className="hide-mobile">Synchroniser</span>
+            <RefreshCw size={16} className={syncStatus.state === 'syncing' ? 'spin' : ''} /> <span className="hide-mobile">Synchroniser</span>
           </button>
         )}
-        <button className="btn small" onClick={onSettings} title="Connexion Zotero">
-          ⚙️
-        </button>
       </header>
-      <nav className="tabs">
-        {tabs.map(([id, label, count]) => (
-          <button key={id} className={`tab ${view === id ? 'active' : ''}`} onClick={() => setView(id)}>
-            {label}
-            {count && <span className="count">{count}</span>}
-          </button>
-        ))}
-      </nav>
       <main>
         {pullInfo && (
           <div className="notice row" style={{ marginBottom: '1rem' }}>
@@ -177,6 +223,6 @@ function ProjectShell({ onHome, onSettings }: { onHome: () => void; onSettings: 
         {view === 'records' && <Records />}
         {view === 'prisma' && <Prisma />}
       </main>
-    </>
+    </Frame>
   );
 }

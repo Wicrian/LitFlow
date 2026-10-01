@@ -1,3 +1,4 @@
+import { Check, HelpCircle, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Decision, Project, RecordItem, Stage, StageDecision } from '../types';
 import { applyFilters, emptyFilters, sortRecords, type Filters, type SortKey } from '../lib/filters';
@@ -10,6 +11,8 @@ import { FilterBar } from './FilterBar';
 import { AiProgressText, useAiProgress } from './AiProgress';
 import { runSuggestions } from '../ai/run';
 import { cohenKappa, kappaLabel } from '../lib/agreement';
+
+const DECISION_ICON: Record<Decision, ReactNode> = { exclude: <X />, maybe: <HelpCircle />, include: <Check /> };
 
 export const DECISION_UI: Record<Decision, { label: string; icon: string; key: string }> = {
   exclude: { label: 'Exclure', icon: '✕', key: '←' },
@@ -134,28 +137,32 @@ export function Review({ stage }: { stage: Stage }) {
 
   const total = baseKeys.length;
   const otherCount = stage === 'fulltext' ? baseKeys.filter((k) => recordKind(p, p.records[k]) === 'other').length : 0;
-  const done = total - counts.none;
   const includeWords = [...splitKeywords(p.highlightInclude), ...p.framework.elements.flatMap((el) => splitKeywords(el.keywords))];
   const excludeWords = splitKeywords(p.highlightExclude);
 
   return (
     <div className="review">
       <div className="stack">
-        <div className="panel stack" style={{ padding: '0.75rem 1rem' }}>
+        <div className="panel stack" style={{ padding: '0.9rem 1.1rem' }}>
           <div className="row">
-            <strong>{stage === 'screening' ? 'Tri sur titre et résumé' : 'Évaluation du texte intégral'}</strong>
-            <span className="muted small">
-              {done}/{total} décidé(s) · file : {queue.length} référence(s)
-            </span>
+            <div className="seg">
+              {(
+                [
+                  ['undecided', 'À trier'],
+                  ['maybe', 'Incertaines'],
+                  ['include', 'Incluses'],
+                  ['exclude', 'Exclues'],
+                  ...(stage === 'fulltext' ? [['notretrieved', 'Introuvables']] : []),
+                  ['all', 'Toutes'],
+                ] as [Filters['screening'], string][]
+              ).map(([k, l]) => (
+                <button key={k} className={filters[stage] === k ? 'on' : ''} onClick={() => setFilters({ ...filters, [stage]: k })}>
+                  {l}
+                </button>
+              ))}
+            </div>
             <span className="spacer" />
-            <select style={{ width: 'auto' }} value={filters[stage]} onChange={(e) => setFilters({ ...filters, [stage]: e.target.value as Filters['screening'] })}>
-              <option value="undecided">Sans décision</option>
-              <option value="maybe">Incertaines</option>
-              <option value="include">Incluses</option>
-              <option value="exclude">Exclues</option>
-              {stage === 'fulltext' && <option value="notretrieved">Introuvables</option>}
-              <option value="all">Toutes</option>
-            </select>
+            <span className="muted small">{queue.length} dans la file</span>
             <select style={{ width: 'auto' }} value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
               <option value="">Ordre de Zotero</option>
               <option value="title">Titre</option>
@@ -221,8 +228,11 @@ export function Review({ stage }: { stage: Stage }) {
             </SwipeCard>
             <div className="actions">
               {(['exclude', 'maybe', 'include'] as Decision[]).map((d) => (
-                <button key={d} className={`btn ${d}`} onClick={() => makeDecision(d)}>
-                  {DECISION_UI[d].icon} {DECISION_UI[d].label} <kbd>{DECISION_UI[d].key}</kbd>
+                <button key={d} className={`decide ${d}`} onClick={() => makeDecision(d)}>
+                  <span className="disc">{DECISION_ICON[d]}</span>
+                  <span>
+                    {DECISION_UI[d].label} <kbd>{DECISION_UI[d].key}</kbd>
+                  </span>
                 </button>
               ))}
             </div>
@@ -504,13 +514,28 @@ function Sidebar({
     <>
       <div className="panel stack small">
         <div className="row">
-          <span className="badge include">{counts.include} inclus</span>
-          <span className="badge exclude">{counts.exclude} exclus</span>
-          <span className="badge maybe">{counts.maybe} incertains</span>
-          {stage === 'fulltext' && counts.notRetrieved > 0 && <span className="badge">{counts.notRetrieved} introuvables</span>}
-          <span className="badge">{counts.none} restants</span>
+          <strong style={{ fontSize: '1rem' }}>Avancement</strong>
+          <span className="spacer" />
+          <span className="badge">{total ? Math.round(((total - counts.none) / total) * 100) : 0} %</span>
         </div>
-        <div className="muted">{total ? Math.round(((total - counts.none) / total) * 100) : 0} % terminé</div>
+        <div className="tiles">
+          <div className="tile t1">
+            <div className="tile-label">Incluses</div>
+            <div className="tile-value">{counts.include}</div>
+          </div>
+          <div className="tile t2">
+            <div className="tile-label">Exclues</div>
+            <div className="tile-value">{counts.exclude}</div>
+          </div>
+          <div className="tile t3">
+            <div className="tile-label">Incertaines</div>
+            <div className="tile-value">{counts.maybe}</div>
+          </div>
+          <div className="tile t4">
+            <div className="tile-label">{stage === 'fulltext' && counts.notRetrieved ? `À trier · ${counts.notRetrieved} introuv.` : 'À trier'}</div>
+            <div className="tile-value">{counts.none}</div>
+          </div>
+        </div>
       </div>
       {(p.question || p.inclusionCriteria.length > 0 || p.exclusionCriteria.length > 0) && (
         <details className="panel small" open>
