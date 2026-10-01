@@ -96,6 +96,15 @@ service d’IA.
 souvent. Elle ne remplace pas un second évaluateur humain dans une revue systématique publiée ; mentionnez son
 usage dans votre méthode.
 
+## Reprendre un tri commencé dans Rayyan
+
+Onglet **Identification › Reprendre un tri fait dans Rayyan** : choisissez le fichier `articles.csv` de l’export
+Rayyan (CSV). Seules les décisions sont reprises (avec raisons d’exclusion et labels, ces derniers devenant des
+étiquettes `LF:rayyan:…`) : chaque ligne est rapprochée de la référence Zotero correspondante (DOI, titre, puis
+titre proche), dont le texte d’origine est conservé. Les références que Rayyan avait fusionnées comme doublons
+sont marquées « doublon ». Un aperçu montre les rapprochements à vérifier et les références introuvables avant
+d’importer.
+
 ## Reprendre une revue sur un autre appareil
 
 Chaque revue liée à Zotero est sauvegardée automatiquement (protocole, raisons, décisions, notes, réglages) dans
@@ -172,7 +181,8 @@ Le dossier `dist/` produit par `npm run build` peut aussi être déposé sur n�
 - [ ] Grille d’extraction de données personnalisable, export tableur
 - [ ] Évaluation de la qualité / du risque de biais (CASP, MMAT, RoB 2…)
 - [ ] Interface en anglais et autres langues
-- [ ] Import de sauvegardes Rayyan / Covidence
+- [x] Import des décisions Rayyan
+- [ ] Import des décisions Covidence
 - [ ] Extension Zotero 7 (tri directement dans Zotero)
 
 Les contributions sont bienvenues : ouvrez une *issue* pour en discuter.

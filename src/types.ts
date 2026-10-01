@@ -122,6 +122,8 @@ export interface Project {
   fulltext: Record<string, StageDecision>;
   /** Textes intégraux introuvables (PRISMA : « reports not retrieved »). */
   notRetrieved: Record<string, string>;
+  /** Labels importés de Rayyan (clé item -> labels), écrits dans Zotero en LF:rayyan:… */
+  rayyanLabels: Record<string, string[]>;
   /** Raisons mémorisées, réutilisables d'un clic. */
   reasons: Record<Stage, Record<Decision, string[]>>;
   /** Quand demander une raison après une décision. */

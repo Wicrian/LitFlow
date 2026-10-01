@@ -170,6 +170,7 @@ export function newProject(name: string): Project {
     screening: {},
     fulltext: {},
     notRetrieved: {},
+    rayyanLabels: {},
     reasons: structuredClone(DEFAULT_REASONS),
     askReason: { include: true, exclude: true, maybe: true },
     manualCounts: { automationExcluded: 0, otherRemoved: 0, otherMethodsIdentified: [] },

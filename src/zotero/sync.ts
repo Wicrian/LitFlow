@@ -50,6 +50,8 @@ export function desiredState(p: Project, key: string, fulltextSet?: Set<string>)
   const collections: CollectionId[] = [];
   const tags: string[] = [];
 
+  for (const l of p.rayyanLabels?.[key] ?? []) tags.push(`${pre}:rayyan:${l}`);
+
   if (key in p.duplicates) {
     collections.push('duplicates');
     tags.push(`${pre}:doublon`);

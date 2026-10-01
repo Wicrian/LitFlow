@@ -5,6 +5,7 @@ import { ZoteroClient, type ZCollection } from '../zotero/api';
 import { mergeImport } from '../zotero/mapping';
 import { importFromZotero } from '../zotero/sync';
 import { reconcileFromZotero } from '../zotero/pull';
+import { RayyanImport } from './RayyanImport';
 
 const KINDS: [SourceKind, string][] = [
   ['database', 'Base de données'],
@@ -222,6 +223,7 @@ export function ImportView({ onSettings, onDone }: { onSettings: () => void; onD
           </table>
         </section>
       )}
+      {total > 0 && <RayyanImport />}
     </div>
   );
 }
