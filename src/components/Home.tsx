@@ -3,6 +3,7 @@ import type { Project, Settings } from '../types';
 import { newProject } from '../lib/frameworks';
 import { demoProject } from '../lib/demo';
 import { importProjectJson } from '../lib/export';
+import { RestoreDialog } from './RestoreDialog';
 
 interface Props {
   projects: Project[];
@@ -15,6 +16,7 @@ interface Props {
 export function Home({ projects, settings, onOpen, onDelete, onSettings }: Props) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [restoring, setRestoring] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -73,6 +75,11 @@ export function Home({ projects, settings, onOpen, onDelete, onSettings }: Props
         <div className="row">
           <h2 style={{ margin: 0 }}>Mes revues</h2>
           <span className="spacer" />
+          {settings.apiKey && (
+            <button className="btn small primary" onClick={() => setRestoring(true)}>
+              Reprendre depuis Zotero
+            </button>
+          )}
           <button className="btn small" onClick={() => fileRef.current?.click()}>
             Ouvrir une sauvegarde (.json)
           </button>
@@ -120,10 +127,11 @@ export function Home({ projects, settings, onOpen, onDelete, onSettings }: Props
           );
         })}
         <p className="small muted">
-          Les projets sont enregistrés dans ce navigateur. Pensez à exporter une sauvegarde (onglet Références) pour changer
-          d’ordinateur ou partager avec un·e collègue.
+          Les projets sont enregistrés dans ce navigateur. Les revues liées à Zotero y sont aussi sauvegardées
+          automatiquement : « Reprendre depuis Zotero » les retrouve sur n’importe quel appareil.
         </p>
       </section>
+      {restoring && <RestoreDialog settings={settings} localProjects={projects} onClose={() => setRestoring(false)} onOpen={onOpen} />}
     </main>
   );
 }

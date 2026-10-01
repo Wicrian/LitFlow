@@ -174,7 +174,7 @@ export function newProject(name: string): Project {
     askReason: { include: true, exclude: true, maybe: true },
     manualCounts: { automationExcluded: 0, otherRemoved: 0, otherMethodsIdentified: [] },
     ai: { enabled: false, show: 'before', learn: true, dupThreshold: 0.93, suggestions: {}, lastRun: null },
-    sync: { auto: true, tagPrefix: 'LF', writeNotes: true, pending: [], lastSync: null, lastError: null, libraryVersion: null, sourceMap: {}, lastPull: null },
+    sync: { auto: true, tagPrefix: 'LF', writeNotes: true, pending: [], lastSync: null, lastError: null, libraryVersion: null, sourceMap: {}, lastPull: null, snapshotKeys: [], snapshotHash: null, lastSnapshot: null },
   };
 }
 

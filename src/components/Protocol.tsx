@@ -10,7 +10,7 @@ const DECISIONS: [Decision, string][] = [
 ];
 
 export function Protocol() {
-  const { project: p, update } = useProject();
+  const { project: p, update, client, saveSnapshotNow, snapshotError } = useProject();
   const set = <K extends keyof typeof p>(k: K, v: (typeof p)[K]) => update((x) => ({ ...x, [k]: v }));
 
   return (
@@ -214,6 +214,19 @@ export function Protocol() {
           « LitFlow – … » fonctionne aussi. LitFlow relit Zotero toutes les 45 secondes (et à chaque clic sur ⟳) ; au tri
           titre-résumé, utilisez <code>{p.sync.tagPrefix || 'LF'}:tri:…</code>.
         </div>
+        {client && (
+          <div className="row small">
+            <span>
+              <strong>Sauvegarde dans Zotero :</strong>{' '}
+              {p.sync.lastSnapshot ? `dernière le ${new Date(p.sync.lastSnapshot).toLocaleString('fr-CA')}` : 'pas encore faite'} (automatique,
+              pour reprendre la revue sur un autre appareil)
+            </span>
+            <button className="btn small" onClick={() => void saveSnapshotNow()}>
+              Sauvegarder maintenant
+            </button>
+          </div>
+        )}
+        {snapshotError && <div className="notice error">{snapshotError}</div>}
         <p className="small muted">
           Si vous menez plusieurs revues dans la même bibliothèque, donnez un préfixe différent à chacune. Changer le préfixe
           après avoir synchronisé laisse les anciennes étiquettes dans Zotero.

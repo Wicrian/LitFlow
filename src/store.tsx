@@ -6,6 +6,7 @@ import { saveProject } from './lib/storage';
 import { ZoteroClient } from './zotero/api';
 import { pushToZotero } from './zotero/sync';
 import { applyChanges, fetchChanges } from './zotero/pull';
+import { saveSnapshot } from './zotero/snapshot';
 
 export type SyncStatus = { state: 'off' | 'idle' | 'pending' | 'syncing' | 'error'; message?: string; done?: number; total?: number };
 
@@ -22,6 +23,9 @@ interface Ctx {
   syncNow: (keys?: string[]) => Promise<void>;
   syncStatus: SyncStatus;
   pullNow: () => Promise<void>;
+  /** Sauvegarde le projet dans Zotero (pour le reprendre sur un autre appareil). */
+  saveSnapshotNow: () => Promise<void>;
+  snapshotError: string | null;
   /** Résumé de la dernière lecture de changements venus de Zotero. */
   pullInfo: { changed: number; added: number } | null;
   clearPullInfo: () => void;
@@ -42,6 +46,7 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({ state: 'idle' });
   const syncing = useRef(false);
   const pulling = useRef(false);
+  const snapshotting = useRef(false);
   const [pullInfo, setPullInfo] = useState<{ changed: number; added: number } | null>(null);
   const dirtyDuringSync = useRef(new Set<string>());
 
@@ -95,6 +100,11 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
   const syncNow = useCallback(
     async (keys?: string[]) => {
       if (!client || syncing.current) return;
+      // Évite de créer deux fois les collections si une sauvegarde est en cours.
+      if (snapshotting.current) {
+        setTimeout(() => void syncNow(keys), 2000);
+        return;
+      }
       const start = ref.current;
       const toSend = keys ?? start.sync.pending;
       if (!toSend.length) return;
@@ -157,6 +167,29 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
     }
   }, [client]);
 
+  // Sauvegarde du projet dans Zotero, 15 secondes après la dernière modification.
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
+  const saveSnapshotNow = useCallback(async () => {
+    const cur = ref.current;
+    if (!client || !cur.library || !cur.sourceCollection || syncing.current || snapshotting.current) return;
+    snapshotting.current = true;
+    try {
+      const res = await saveSnapshot(client, cur);
+      if (res)
+        setProject((c) => ({ ...c, zoteroCollections: { ...c.zoteroCollections, ...res.zoteroCollections }, sync: { ...c.sync, ...res.sync } }));
+      setSnapshotError(null);
+    } catch (e) {
+      setSnapshotError(e instanceof Error ? e.message : String(e));
+    } finally {
+      snapshotting.current = false;
+    }
+  }, [client]);
+  useEffect(() => {
+    if (!client || !project.library || !project.sourceCollection) return;
+    const t = setTimeout(() => void saveSnapshotNow(), 15000);
+    return () => clearTimeout(t);
+  }, [client, project, saveSnapshotNow]);
+
   // À l'ouverture puis toutes les 45 secondes quand la page est visible.
   useEffect(() => {
     if (!client) return;
@@ -183,6 +216,6 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
       ? { state: 'pending', message: `${project.sync.pending.length} modification(s) à envoyer` }
       : syncStatus;
 
-  const value: Ctx = { project, settings, client, update, decide, rememberReason, markDirty, syncNow, syncStatus: status, pullNow, pullInfo, clearPullInfo: () => setPullInfo(null) };
+  const value: Ctx = { project, settings, client, update, decide, rememberReason, markDirty, syncNow, syncStatus: status, pullNow, pullInfo, clearPullInfo: () => setPullInfo(null), saveSnapshotNow, snapshotError };
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
 }

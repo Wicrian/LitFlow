@@ -161,6 +161,10 @@ export interface Project {
     /** Collection Zotero -> nom de la source (y compris les sous-sous-collections). */
     sourceMap: Record<string, string>;
     lastPull: string | null;
+    /** Notes Zotero contenant la sauvegarde du projet (pour le reprendre sur un autre appareil). */
+    snapshotKeys: string[];
+    snapshotHash: string | null;
+    lastSnapshot: string | null;
   };
 }
 

@@ -5,6 +5,7 @@ import { ZoteroClient, type ZCollection, type ZItem } from '../src/zotero/api';
 import { mergeImport } from '../src/zotero/mapping';
 import { importFromZotero, pushToZotero } from '../src/zotero/sync';
 import { applyChanges, fetchChanges } from '../src/zotero/pull';
+import { readSnapshots, restoreSnapshot, saveSnapshot } from '../src/zotero/snapshot';
 
 let collections: ZCollection[];
 let items: Map<string, ZItem>;
@@ -36,6 +37,11 @@ function fakeZotero(url: string, init: RequestInit = {}): Response {
   if (method === 'GET' && path === '/items/top' && u.searchParams.has('since')) {
     const since = Number(u.searchParams.get('since'));
     const all = [...items.values()].filter((i) => i.version > since && !i.data.parentItem);
+    return json(all, { 'Total-Results': String(all.length) });
+  }
+  if (method === 'GET' && path === '/items' && u.searchParams.has('tag')) {
+    const tag = u.searchParams.get('tag');
+    const all = [...items.values()].filter((i) => i.data.tags?.some((t) => t.tag === tag));
     return json(all, { 'Total-Results': String(all.length) });
   }
   if (method === 'GET' && path === '/items') {
@@ -184,5 +190,42 @@ describe('Zotero', () => {
     expect(pushed.failed).toEqual([]);
     expect(items.get('A')!.data.tags!.map((t) => t.tag)).toEqual(['à lire', 'LF:tri:exclu', 'LF:tri:raison:Hors période']);
     expect(items.get('B')!.data.collections).toEqual(['ERU', cols.screening_exclude]);
+  });
+
+  it('sauvegarde le projet dans Zotero et le reprend sur un autre appareil', async () => {
+    const client = new ZoteroClient('key', { type: 'user', id: '1' });
+    let p = newProject('Revue iPad');
+    p.library = { type: 'user', id: '1', name: 'Moi' };
+    p.sourceCollection = { key: 'ROOT', name: 'Ma revue' };
+    p.question = 'Quelle est la question ?';
+    p.inclusionCriteria = ['Adultes'];
+    p.reasons.screening.exclude.push('Ma raison à moi');
+    const imp = await importFromZotero(client, p);
+    p = mergeImport({ ...p, sources: imp.sources }, imp.records).project;
+    p.sources = p.sources.map((s) => (s.name === 'Érudit' ? { ...s, kind: 'other' } : s));
+    p.screening = { A: { decision: 'exclude', reasons: ['Hors sujet', 'Adultes'], note: 'Note de lecture', at: '2026-01-01' } };
+    p = (await pushToZotero(client, p, ['A'])).project;
+
+    const saved = await saveSnapshot(client, p);
+    expect(saved).not.toBeNull();
+    p = { ...p, zoteroCollections: saved!.zoteroCollections, sync: { ...p.sync, ...saved!.sync } };
+    expect(await saveSnapshot(client, p)).toBeNull(); // rien n'a changé : pas de nouvelle écriture
+
+    // Plus tard, dans Zotero : B est exclu à la main.
+    const b = items.get('B')!;
+    items.set('B', { ...b, version: ++version, data: { ...b.data, tags: [...b.data.tags!, { tag: 'LF:tri:exclu' }] } });
+
+    // Nouvel appareil : rien en local.
+    const found = await readSnapshots(client, { type: 'user', id: '1', name: 'Moi' });
+    expect(found).toHaveLength(1);
+    expect(found[0].project.name).toBe('Revue iPad');
+    const restored = await restoreSnapshot(client, found[0]);
+    expect(restored.id).toBe(p.id);
+    expect(restored.question).toBe('Quelle est la question ?');
+    expect(restored.reasons.screening.exclude).toContain('Ma raison à moi');
+    expect(restored.sources.find((s) => s.name === 'Érudit')!.kind).toBe('other');
+    expect(Object.keys(restored.records).sort()).toEqual(['A', 'B', 'C']);
+    expect(restored.screening.A).toMatchObject({ decision: 'exclude', reasons: ['Hors sujet', 'Adultes'], note: 'Note de lecture' });
+    expect(restored.screening.B.decision).toBe('exclude');
   });
 });

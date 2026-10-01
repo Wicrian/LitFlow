@@ -96,6 +96,16 @@ service d’IA.
 souvent. Elle ne remplace pas un second évaluateur humain dans une revue systématique publiée ; mentionnez son
 usage dans votre méthode.
 
+## Reprendre une revue sur un autre appareil
+
+Chaque revue liée à Zotero est sauvegardée automatiquement (protocole, raisons, décisions, notes, réglages) dans
+une note de la collection `LitFlow – nom du projet`, avec l’étiquette `LitFlow-projet`. Sur un autre appareil
+(iPad, autre ordinateur) ou après avoir vidé le navigateur : **Accueil › Reprendre depuis Zotero**. Les références
+sont relues dans Zotero et les décisions prises entre-temps dans Zotero (étiquettes `LF:`) sont reprises.
+
+Conseil : travaillez sur un appareil à la fois. Les décisions passent d’un appareil à l’autre par Zotero, mais
+une modification du protocole faite sur l’un n’apparaît sur l’autre qu’en reprenant la revue depuis Zotero.
+
 ## Confidentialité
 
 - LitFlow n’a **pas de serveur** : c’est une page web qui fonctionne entièrement dans votre navigateur.
@@ -150,6 +160,12 @@ Le dossier `dist/` produit par `npm run build` peut aussi être déposé sur n�
 (serveur universitaire, Netlify…).
 
 ### Feuille de route (idées)
+
+- [ ] **FAQ « Sécurité et confidentialité » dans l’application** (ex. « LitFlow peut-il abîmer mon Zotero ? »,
+      « Qui peut voir ma revue ? ») + court texte de présentation pour rassurer les nouveaux utilisateurs
+- [ ] Stockage « permanent » du navigateur + rappel de sauvegarde
+- [ ] Héberger le programme de l’assistant IA avec LitFlow (au lieu de jsDelivr)
+- [ ] Autres thèmes de couleurs : classique, chaleureux, moderne, ado
 
 - [ ] Double tri en aveugle entre personnes, résolution des conflits (le kappa existe déjà pour l’IA)
 - [ ] Assistant IA : explications rédigées par un modèle de langage local (Ollama), en option

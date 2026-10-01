@@ -160,6 +160,11 @@ export class ZoteroClient {
     return this.all<ZItem>(`${this.prefix}/items/top?since=${version}&format=json`);
   }
 
+  /** Items portant une étiquette donnée (y compris les notes indépendantes). */
+  itemsWithTag(tag: string): Promise<ZItem[]> {
+    return this.all<ZItem>(`${this.prefix}/items?tag=${encodeURIComponent(tag)}&format=json`);
+  }
+
   itemsByKeys(keys: string[]): Promise<ZItem[]> {
     return this.json<ZItem[]>(`${this.prefix}/items?itemKey=${keys.join(',')}&format=json&limit=50`);
   }
