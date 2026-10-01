@@ -3,8 +3,10 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './styles.css';
 
-// Thème de couleurs (d'autres thèmes pourront être ajoutés dans styles.css).
-document.documentElement.dataset.theme = 'innovation';
+import { applyTheme, loadTheme } from './lib/theme';
+
+// Ambiance de couleurs choisie par la personne (gardée dans ce navigateur).
+applyTheme(loadTheme());
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

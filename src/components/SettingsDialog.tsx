@@ -60,7 +60,7 @@ export function SettingsDialog({ settings, onSave, onClose }: { settings: Settin
             <button
               className="btn danger"
               onClick={() => {
-                onSave({ apiKey: '', userId: '', username: '' });
+                onSave({ ...settings, apiKey: '', userId: '', username: '' });
                 setApiKey('');
                 setStatus(null);
               }}

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ClipboardList, Copy, FileText, GitFork, Home as HomeIcon, Layers, Library, RefreshCw, Settings as SettingsIcon, Sparkles, Table2 } from 'lucide-react';
+import { ClipboardList, Copy, FileText, GitFork, Home as HomeIcon, Layers, Library, Palette, RefreshCw, Settings as SettingsIcon, Sparkles, Table2 } from 'lucide-react';
 import type { Project, Settings } from './types';
 import { deleteProject, listProjects, loadSettings, saveProject, saveSettings } from './lib/storage';
 import { ProjectProvider, useProject } from './store';
 import { Home } from './components/Home';
 import { SettingsDialog } from './components/SettingsDialog';
+import { ThemePicker } from './components/ThemePicker';
 import { Protocol } from './components/Protocol';
 import { ImportView } from './components/ImportView';
 import { Dedup } from './components/Dedup';
@@ -21,6 +22,7 @@ export default function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [current, setCurrent] = useState<Project | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTheme, setShowTheme] = useState(false);
 
   const refresh = () => listProjects().then(setProjects);
   useEffect(() => void refresh(), []);
@@ -40,6 +42,7 @@ export default function App() {
               void refresh();
             }}
             onSettings={() => setShowSettings(true)}
+            onTheme={() => setShowTheme(true)}
           />
         </ProjectProvider>
       ) : (
@@ -48,6 +51,7 @@ export default function App() {
             <>
               <RailItem icon={<HomeIcon />} label="Accueil" active onClick={() => undefined} />
               <span className="spacer" />
+              <RailItem icon={<Palette />} label="Style" onClick={() => setShowTheme(true)} />
               <RailItem icon={<SettingsIcon />} label="Zotero" onClick={() => setShowSettings(true)} />
             </>
           }
@@ -64,6 +68,7 @@ export default function App() {
           />
         </Frame>
       )}
+      {showTheme && <ThemePicker onClose={() => setShowTheme(false)} />}
       {showSettings && (
         <SettingsDialog
           settings={settings}
@@ -118,7 +123,7 @@ const VIEWS: Record<View, { label: string; title: string; subtitle: string; icon
   prisma: { label: 'PRISMA', title: 'Diagramme PRISMA 2020', subtitle: 'Calculé automatiquement à partir de vos décisions', icon: <GitFork /> },
 };
 
-function ProjectShell({ onHome, onSettings }: { onHome: () => void; onSettings: () => void }) {
+function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onSettings: () => void; onTheme: () => void }) {
   const { project, syncStatus, syncNow, client, pullNow, pullInfo, clearPullInfo } = useProject();
   const hasRecords = Object.keys(project.records).length > 0;
   const [view, setView] = useState<View>(hasRecords ? 'screening' : project.library ? 'import' : 'protocol');
@@ -175,6 +180,7 @@ function ProjectShell({ onHome, onSettings }: { onHome: () => void; onSettings: 
           </nav>
           <span className="spacer" />
           <RailItem icon={<HomeIcon />} label="Mes revues" onClick={onHome} />
+          <RailItem icon={<Palette />} label="Style" onClick={onTheme} />
           <RailItem icon={<SettingsIcon />} label="Zotero" onClick={onSettings} />
         </>
       }

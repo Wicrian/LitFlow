@@ -45,6 +45,150 @@
   --blur: blur(18px) saturate(140%);
 }
 
+/* ---- Thème « Classique » : blanc et gris, encre marine ---- */
+[data-theme='classique'] {
+  --backdrop: linear-gradient(180deg, #e7e7e9, #cfcfd3);
+  --frame: rgba(255, 255, 255, 0.92);
+  --frame-border: #ffffff;
+  --panel: #ececef;
+  --panel-solid: #ffffff;
+  --panel-strong: #ffffff;
+  --panel-border: rgba(255, 255, 255, 0.95);
+  --sheet: #ffffff;
+  --inset: #e4e4e8;
+  --text: #111a2e;
+  --muted: #6b7180;
+  --border: rgba(17, 26, 46, 0.12);
+  --accent: #111a2e;
+  --accent-2: #3a4560;
+  --accent-soft: #e6e8ee;
+  --accent-contrast: #ffffff;
+  --dark: #111a2e;
+  --dark-contrast: #ffffff;
+  --include: #2e8a62;
+  --include-soft: #dfefe6;
+  --exclude: #c2475e;
+  --exclude-soft: #f6e1e5;
+  --maybe: #a87414;
+  --maybe-soft: #f5ecd8;
+  --tile-1: #e3ece7;
+  --tile-2: #f0e4e6;
+  --tile-3: #f1ead9;
+  --tile-4: #e1e5ef;
+  --shadow: 0 6px 20px rgba(17, 26, 46, 0.06), 0 1px 3px rgba(17, 26, 46, 0.05);
+  --shadow-lg: 0 30px 70px rgba(17, 26, 46, 0.14);
+  --blur: none;
+}
+
+/* ---- Thème « Moderne » : tuiles jaune, bleu, mauve sur fond gris ---- */
+[data-theme='moderne'] {
+  --backdrop: linear-gradient(180deg, #b6b7bb, #a9aaaf);
+  --frame: #f6f6f6;
+  --frame-border: #ffffff;
+  --panel: #ffffff;
+  --panel-solid: #ffffff;
+  --panel-strong: #ffffff;
+  --panel-border: #ffffff;
+  --sheet: #ffffff;
+  --inset: #ececec;
+  --text: #1c1c1e;
+  --muted: #727277;
+  --border: rgba(0, 0, 0, 0.09);
+  --accent: #2b2b2e;
+  --accent-2: #505056;
+  --accent-soft: #ededee;
+  --accent-contrast: #ffffff;
+  --dark: #1c1c1e;
+  --dark-contrast: #ffffff;
+  --include: #3a9a5b;
+  --include-soft: #dcefe2;
+  --exclude: #d0473f;
+  --exclude-soft: #f8e0de;
+  --maybe: #b98512;
+  --maybe-soft: #fbedc6;
+  --tile-1: #c9d7e8;
+  --tile-2: #e2d3ec;
+  --tile-3: #f6d57a;
+  --tile-4: #ececec;
+  --shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 40px 80px rgba(0, 0, 0, 0.2);
+  --blur: none;
+}
+
+/* ---- Thème « Chaleureux » : beige, sable et orangé ---- */
+[data-theme='chaleureux'] {
+  --backdrop: radial-gradient(900px 600px at 70% 40%, #e9c9a3 0%, transparent 65%),
+    linear-gradient(160deg, #ecdfd1, #d6bfa6 60%, #c9ab8c);
+  --frame: rgba(214, 190, 165, 0.45);
+  --frame-border: rgba(255, 245, 232, 0.6);
+  --panel: rgba(248, 238, 226, 0.68);
+  --panel-solid: #fbf4ec;
+  --panel-strong: rgba(252, 245, 237, 0.88);
+  --panel-border: rgba(255, 248, 240, 0.85);
+  --sheet: rgba(252, 246, 239, 0.97);
+  --inset: rgba(233, 218, 201, 0.8);
+  --text: #2a2018;
+  --muted: #7d6a58;
+  --border: rgba(90, 60, 30, 0.14);
+  --accent: #e98a3f;
+  --accent-2: #f3ae6b;
+  --accent-soft: #f7e2cc;
+  --accent-contrast: #ffffff;
+  --dark: #241c15;
+  --dark-contrast: #fdf6ee;
+  --include: #4c8a4f;
+  --include-soft: #e1ecd6;
+  --exclude: #c9553d;
+  --exclude-soft: #f6dfd6;
+  --maybe: #c48416;
+  --maybe-soft: #f7e7c4;
+  --tile-1: #e5ead6;
+  --tile-2: #f3dbd0;
+  --tile-3: #f6e3bf;
+  --tile-4: #efe1d1;
+  --shadow: 0 10px 30px rgba(90, 60, 30, 0.1), 0 2px 6px rgba(90, 60, 30, 0.06);
+  --shadow-lg: 0 30px 80px rgba(90, 60, 30, 0.25);
+  --blur: blur(18px) saturate(120%);
+}
+
+/* ---- Thème « Plein air » : ciel, soleil et prairie ---- */
+[data-theme='ado'] {
+  --backdrop: radial-gradient(140% 40% at 20% 108%, #5dbb4f 0%, #3f9b3c 45%, transparent 46%),
+    radial-gradient(120% 35% at 85% 110%, #6cc65a 0%, #48a443 48%, transparent 49%),
+    radial-gradient(600px 220px at 30% 35%, rgba(255, 255, 255, 0.8) 0%, transparent 70%),
+    linear-gradient(180deg, #a9d0f5 0%, #c9e3fb 70%, #dceffc 100%);
+  --frame: rgba(201, 227, 251, 0.55);
+  --frame-border: rgba(255, 255, 255, 0.85);
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel-solid: #ffffff;
+  --panel-strong: #ffffff;
+  --panel-border: #ffffff;
+  --sheet: #ffffff;
+  --inset: #e7f1fb;
+  --text: #0f1420;
+  --muted: #5d6b80;
+  --border: rgba(20, 60, 120, 0.12);
+  --accent: #2f80ed;
+  --accent-2: #5aa1f5;
+  --accent-soft: #dcebfd;
+  --accent-contrast: #ffffff;
+  --dark: #0f1420;
+  --dark-contrast: #ffffff;
+  --include: #1fa855;
+  --include-soft: #d4f3df;
+  --exclude: #ec3b2f;
+  --exclude-soft: #fde0dd;
+  --maybe: #d99a00;
+  --maybe-soft: #fff1c2;
+  --tile-1: #d4f3df;
+  --tile-2: #fde0dd;
+  --tile-3: #f9c933;
+  --tile-4: #dcebfd;
+  --shadow: 0 10px 30px rgba(20, 60, 120, 0.1), 0 2px 6px rgba(20, 60, 120, 0.06);
+  --shadow-lg: 0 30px 80px rgba(20, 60, 120, 0.25);
+  --blur: blur(14px) saturate(140%);
+}
+
 /* ---- Base commune ---- */
 :root {
   --radius-frame: 36px;
@@ -97,26 +241,26 @@ svg.spin { animation: spin 1s linear infinite; }
 .rail-item:focus { outline: none; }
 .rail-item:focus-visible .rail-icon { box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow); }
 .logo {
-  width: 58px; height: 58px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center;
+  width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center;
   background: linear-gradient(140deg, var(--accent-2), var(--accent)); color: #fff;
   box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .logo svg { width: 28px; height: 28px; }
 .rail-item {
   border: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
-  padding: 0.3rem 0.2rem; width: 96px; color: var(--muted); position: relative;
+  padding: 0.15rem 0.2rem; width: 96px; color: var(--muted); position: relative;
 }
 .rail-icon {
-  width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; position: relative;
+  width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; position: relative;
   background: var(--panel-strong); border: 1px solid var(--panel-border); box-shadow: var(--shadow);
   transition: transform 0.15s, background 0.15s;
 }
-.rail-icon svg { width: 21px; height: 21px; stroke-width: 1.8; color: var(--text); }
+.rail-icon svg { width: 19px; height: 19px; stroke-width: 1.8; color: var(--text); }
 .rail-item:hover .rail-icon { transform: translateY(-2px); }
 .rail-item.active .rail-icon { background: var(--dark); border-color: var(--dark); }
 .rail-item.active .rail-icon svg { color: var(--dark-contrast); }
 .rail-item.active { color: var(--text); }
-.rail-label { font-size: 0.78rem; font-weight: 500; text-align: center; line-height: 1.15; }
+.rail-label { font-size: 0.74rem; font-weight: 500; text-align: center; line-height: 1.15; }
 .rail-count { font-size: 0.68rem; padding: 0 0.4rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .rail-alert { position: absolute; top: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--exclude); border: 2px solid var(--panel-solid); }
 
@@ -330,3 +474,13 @@ details > summary::-webkit-details-marker { display: none; }
   .card { padding: 1.3rem; border-radius: 24px; }
   .card h2 { font-size: 1.25rem; }
 }
+
+/* ---- Choix de l'ambiance ---- */
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.75rem; }
+.theme-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; text-align: left; cursor: pointer;
+  padding: 0.9rem; border-radius: var(--radius); border: 2px solid var(--border); background: var(--panel-strong);
+}
+.theme-card.on { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.theme-swatch { display: flex; width: 100%; height: 46px; border-radius: 12px; overflow: hidden; margin-bottom: 0.3rem; border: 1px solid var(--border); }
+.theme-swatch span { flex: 1; }
