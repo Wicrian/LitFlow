@@ -1,3 +1,4 @@
+import { Palette } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { Project, Settings } from '../types';
 import { newProject } from '../lib/frameworks';
@@ -11,9 +12,10 @@ interface Props {
   onOpen: (p: Project) => void;
   onDelete: (id: string) => void;
   onSettings: () => void;
+  onTheme: () => void;
 }
 
-export function Home({ projects, settings, onOpen, onDelete, onSettings }: Props) {
+export function Home({ projects, settings, onOpen, onDelete, onSettings, onTheme }: Props) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [restoring, setRestoring] = useState(false);
@@ -21,13 +23,18 @@ export function Home({ projects, settings, onOpen, onDelete, onSettings }: Props
 
   return (
     <main>
-      <section className="hero">
+      <section className="hero row" style={{ alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 260 }}>
         <div className="eyebrow">Revue de littérature libre et gratuite</div>
         <h1>Bonjour 👋 Prêt·e à trier ?</h1>
         <p className="muted">
           LitFlow est directement connecté à votre bibliothèque Zotero : vos titres, résumés et accents restent intacts,
           rien n’est réimporté, tout est synchronisé.
         </p>
+        </div>
+        <button className="btn" onClick={onTheme}>
+          <Palette size={16} /> Changer de style
+        </button>
       </section>
 
       <div className="grid2">

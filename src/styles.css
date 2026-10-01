@@ -469,6 +469,7 @@ details > summary::-webkit-details-marker { display: none; }
 }
 @media (max-width: 640px) {
   .hide-mobile, .actions kbd { display: none; }
+  .btn { white-space: normal; text-align: center; }
   .actions { gap: 1rem; }
   .panel { padding: 1.1rem; }
   .card { padding: 1.3rem; border-radius: 24px; }

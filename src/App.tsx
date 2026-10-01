@@ -65,6 +65,7 @@ export default function App() {
               void refresh();
             }}
             onSettings={() => setShowSettings(true)}
+            onTheme={() => setShowTheme(true)}
           />
         </Frame>
       )}
