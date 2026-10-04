@@ -160,3 +160,14 @@ describe('organisation', () => {
     expect(newCategory('x').zoteroKey).toBeNull();
   });
 });
+
+describe('protection de la collection source', () => {
+  it('ne reprend jamais la collection de recherche comme catégorie', async () => {
+    const { p } = await setup();
+    collections.push({ key: 'THESE', version: 1, data: { key: 'THESE', name: 'Thèse', parentCollection: false } });
+    collections.find((c) => c.key === 'SRC')!.data.parentCollection = 'THESE';
+    collections.push({ key: 'CH1', version: 1, data: { key: 'CH1', name: 'Chapitre 1', parentCollection: 'THESE' } });
+    const o = adoptExistingRoot(p, collections, 'THESE', '');
+    expect(o.categories.map((c) => c.name)).toEqual(['Chapitre 1']);
+  });
+});

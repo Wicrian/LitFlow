@@ -29,7 +29,9 @@ export async function syncOrganisationStructure(
   let o: Organisation = { ...p.organisation, categories: p.organisation.categories.map((c) => ({ ...c })) };
   if (!o.name) return { org: o, removedIds: [] };
   const byKey = new Map(collections.map((c) => [c.key, c]));
-  const childrenOf = (key: string) => collections.filter((c) => c.data.parentCollection === key);
+  // La collection de recherche et les collections LitFlow ne deviennent jamais des catégories.
+  const excluded = new Set([p.sourceCollection?.key, ...Object.values(p.zoteroCollections)].filter(Boolean));
+  const childrenOf = (key: string) => collections.filter((c) => c.data.parentCollection === key && !excluded.has(c.key));
 
   // 1. Collections supprimées depuis LitFlow
   for (const key of o.deletedZoteroKeys) {
@@ -140,11 +142,14 @@ export function mergeStructure(start: Organisation, res: StructureResult, cur: O
 /** Reprend une collection Zotero existante comme plan de classement. */
 export function adoptExistingRoot(p: Project, collections: ZCollection[], rootKey: string, name: string): Organisation {
   const root = collections.find((c) => c.key === rootKey);
+  // Jamais la collection de résultats de recherche ni les collections LitFlow comme catégories.
+  const excluded = new Set([p.sourceCollection?.key, ...Object.values(p.zoteroCollections)].filter(Boolean));
+  const children = (key: string) => collections.filter((c) => c.data.parentCollection === key && !excluded.has(c.key));
   const categories: Category[] = [];
-  for (const z of collections.filter((c) => c.data.parentCollection === rootKey)) {
+  for (const z of children(rootKey)) {
     const top = { ...newCategory(z.data.name), zoteroKey: z.key, syncedName: z.data.name };
     categories.push(top);
-    for (const s of collections.filter((c) => c.data.parentCollection === z.key))
+    for (const s of children(z.key))
       categories.push({ ...newCategory(s.data.name, top.id), zoteroKey: s.key, syncedName: s.data.name });
   }
   const byKey = new Map(categories.map((c) => [c.zoteroKey!, c.id]));

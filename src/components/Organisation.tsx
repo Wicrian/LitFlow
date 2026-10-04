@@ -4,6 +4,7 @@ import type { Category, Organisation as Org, RecordItem } from '../types';
 import {
   categoryLabel,
   deleteCategory,
+  emptyOrganisation,
   deleteMarker,
   fromTemplate,
   MARKER_COLORS,
@@ -47,7 +48,9 @@ function OrganisationSetup() {
   }, [client]);
 
   const tpl = ORG_TEMPLATES.find((t) => t.id === template)!;
-  const ours = new Set(Object.values(p.zoteroCollections));
+  // Exclues : la collection de résultats de recherche (et ses sous-collections, qui sont les sources)
+  // et la collection « LitFlow – projet » : les reprendre comme organisation les mélangerait au tri.
+  const ours = new Set([...Object.values(p.zoteroCollections), p.sourceCollection?.key].filter(Boolean));
   const tree: { c: ZCollection; depth: number }[] = [];
   const walk = (parent: string | false, depth: number) =>
     (collections ?? [])
@@ -108,7 +111,9 @@ function OrganisationSetup() {
           <p className="small muted">
             Si vous avez déjà rangé vos références dans Zotero, choisissez la collection qui contient vos dossiers
             d’organisation : ses sous-collections (sur deux niveaux) deviennent les catégories, et les références déjà rangées
-            le restent. LitFlow continuera ensuite à développer cette collection avec vos ajouts.
+            le restent. LitFlow continuera ensuite à développer cette collection avec vos ajouts. La collection de vos
+            résultats de recherche{p.sourceCollection ? ` (« ${p.sourceCollection.name} »)` : ''} n’est pas proposée : elle sert
+            déjà à l’identification.
           </p>
           {error && <div className="notice error">{error}</div>}
           <div className="row" style={{ alignItems: 'flex-end' }}>
@@ -247,6 +252,26 @@ function Board() {
           <span className="small muted">
             {o.rootMode === 'litflow' ? `Zotero : LitFlow – ${p.name} › ${organisationRootName(o)}` : 'Zotero : collection existante'}
           </span>
+          <button
+            className="btn small"
+            onClick={() => {
+              if (
+                !confirm(
+                  'Changer de plan d’organisation ?\n\n' +
+                    'LitFlow arrête simplement d’utiliser ce plan : rien n’est supprimé ni modifié dans Zotero ' +
+                    '(collections et références restent telles quelles). Vos marqueurs sont conservés.\n\n' +
+                    'Vous pourrez ensuite choisir un autre modèle ou une autre collection.',
+                )
+              )
+                return;
+              update((cur) => ({
+                ...cur,
+                organisation: { ...emptyOrganisation(), markers: cur.organisation.markers, markerAssignments: cur.organisation.markerAssignments },
+              }));
+            }}
+          >
+            Changer de plan
+          </button>
           <span className="spacer" />
           <input type="search" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 200 }} />
         </div>
@@ -471,6 +496,13 @@ function DeleteCategoryDialog({ cat, onClose }: { cat: Category; onClose: () => 
         <h2>Supprimer « {cat.name} »</h2>
         <p className="small muted">
           La sous-collection Zotero correspondante sera supprimée aussi. <strong>Les références ne sont jamais supprimées.</strong>
+          {o.rootMode === 'existing' && (
+            <>
+              {' '}
+              <strong>Attention :</strong> ce plan reprend une collection Zotero qui existait avant LitFlow ; c’est cette
+              sous-collection-là qui sera supprimée.
+            </>
+          )}
           {subs > 0 && ` Ses ${subs} sous-catégorie(s) remonteront d’un niveau.`}
         </p>
         {count > 0 ? (
