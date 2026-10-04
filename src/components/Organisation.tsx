@@ -22,6 +22,7 @@ import { useProject } from '../store';
 import type { ZCollection } from '../zotero/api';
 import { adoptExistingRoot, organisationRootName } from '../zotero/organisationSync';
 import { ClassifyPanel } from './ClassifyPanel';
+import { CircleView } from './CircleView';
 
 type Scope = 'review' | 'screening' | 'all' | 'excluded';
 const NONE = '__none';
@@ -159,6 +160,21 @@ function Board() {
         : 'all',
   );
   const [markerFilter, setMarkerFilter] = useState<string[]>([]);
+  const [view, setViewState] = useState<'circle' | 'columns'>(() => {
+    try {
+      return localStorage.getItem('litflow.orgView') === 'columns' ? 'columns' : 'circle';
+    } catch {
+      return 'circle';
+    }
+  });
+  const setView = (v: 'circle' | 'columns') => {
+    setViewState(v);
+    try {
+      localStorage.setItem('litflow.orgView', v);
+    } catch {
+      /* ignoré */
+    }
+  };
   const [q, setQ] = useState('');
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Category | null>(null);
@@ -277,6 +293,14 @@ function Board() {
         </div>
         <div className="row">
           <div className="seg">
+            <button className={view === 'circle' ? 'on' : ''} onClick={() => setView('circle')}>
+              ◎ Tri en cercle
+            </button>
+            <button className={view === 'columns' ? 'on' : ''} onClick={() => setView('columns')}>
+              ▥ Colonnes
+            </button>
+          </div>
+          <div className="seg">
             {(
               [
                 ['review', 'Incluses dans la revue'],
@@ -294,12 +318,17 @@ function Board() {
           <span className="small muted">{visible.length} référence(s)</span>
         </div>
         <MarkerBar selected={markerFilter} onToggle={(id) => setMarkerFilter((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]))} />
-        <div className="small muted">
-          Glissez une carte vers une colonne pour la classer (maintenez <kbd>Alt</kbd> pour la copier dans une 2e catégorie).
-          Cliquez — ou touchez sur tablette — pour choisir catégories et marqueurs.
-        </div>
+        {view === 'columns' && (
+          <div className="small muted">
+            Glissez une carte vers une colonne pour la classer (maintenez <kbd>Alt</kbd> pour la copier dans une 2e catégorie).
+            Cliquez — ou touchez sur tablette — pour choisir catégories et marqueurs.
+          </div>
+        )}
       </section>
 
+      {view === 'circle' && <CircleView visible={visible} onAddCategory={() => addCategory(null)} />}
+
+      {view === 'columns' && (
       <div className="board">
         {columns.map((col) => (
           <div key={col.id} className={`board-col ${col.cat?.parent ? 'sub' : ''} ${drag?.over === col.id ? 'over' : ''}`} data-drop={col.id}>
@@ -353,6 +382,7 @@ function Board() {
           <Plus /> Nouvelle catégorie
         </button>
       </div>
+      )}
 
       {drag && (
         <div className="drag-ghost" style={{ left: drag.x + 12, top: drag.y + 12 }}>
