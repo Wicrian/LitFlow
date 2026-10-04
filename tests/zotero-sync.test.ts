@@ -167,7 +167,7 @@ describe('Zotero', () => {
     p = mergeImport({ ...p, sources: imp.sources }, imp.records).project;
     p.sync = { ...p.sync, sourceMap: imp.sourceMap, libraryVersion: imp.libraryVersion };
     const d = (decision: 'include' | 'exclude') => ({ decision, reasons: [], note: 'ma note', at: '' });
-    p.screening = { A: d('include'), B: d('include'), C: d('include') };
+    p.screening = { A: d('include'), B: d('include'), C: d('exclude') };
     p = (await pushToZotero(client, p, ['A', 'B', 'C'])).project;
     const cols = p.zoteroCollections;
 
@@ -183,7 +183,7 @@ describe('Zotero', () => {
     };
     edit('A', (x) => x.tags!.push({ tag: 'LF:tri:exclu' }, { tag: 'LF:tri:raison:Hors période' }));
     edit('B', (x) => x.collections!.push(cols.screening_exclude));
-    edit('C', (x) => (x.tags = x.tags!.filter((t) => t.tag !== 'LF:tri:inclus')));
+    edit('C', (x) => (x.tags = x.tags!.filter((t) => t.tag !== 'LF:tri:exclu')));
     p.sync.pending = ['C'];
     // Nouvelle référence ajoutée dans la sous-collection PubMed.
     items.set('D', { ...item('D', 'Nouvelle étude', ['PUB']), version: ++version });
@@ -194,7 +194,7 @@ describe('Zotero', () => {
     expect(res.added).toBe(1);
     expect(res.project.screening.A).toMatchObject({ decision: 'exclude', reasons: ['Hors période'], note: 'ma note' });
     expect(res.project.screening.B.decision).toBe('exclude');
-    expect(res.project.screening.C.decision).toBe('include');
+    expect(res.project.screening.C.decision).toBe('exclude');
     expect(res.project.records.D.sources).toEqual(['PubMed']);
     expect(res.project.sync.libraryVersion).toBe(version);
 

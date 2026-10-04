@@ -135,8 +135,16 @@ export interface SyncProgress {
   (message: string, done?: number, total?: number): void;
 }
 
-/** Crée (si besoin) l'arborescence de collections du projet dans Zotero. */
-export async function ensureCollections(client: ZoteroClient, p: Project): Promise<Project['zoteroCollections']> {
+/**
+ * Vérifie les collections du projet dans Zotero et crée celles qui manquent.
+ * Seules la collection « LitFlow – projet » et les collections `needed` sont
+ * créées : un dossier (« 1 – Tri · Exclus »…) n'apparaît que lorsqu'il sert.
+ */
+export async function ensureCollections(
+  client: ZoteroClient,
+  p: Project,
+  needed: Iterable<CollectionId> = [],
+): Promise<Project['zoteroCollections']> {
   const existing = await client.collections();
   const byKey = new Map<string, ZCollection>(existing.map((c) => [c.key, c]));
   const ids = { ...p.zoteroCollections };
@@ -148,11 +156,14 @@ export async function ensureCollections(client: ZoteroClient, p: Project): Promi
       (await client.createCollection(rootCollectionName(p)));
     ids.root = root;
   }
+  const want = new Set(needed);
   for (const [id, name] of Object.entries(COLLECTION_NAMES)) {
     if (ids[id] && byKey.has(ids[id])) continue;
-    ids[id] =
-      existing.find((c) => c.data.parentCollection === root && c.data.name === name)?.key ??
-      (await client.createCollection(name, root));
+    // Déjà là dans Zotero (même nom) : on la reprend ; sinon on ne la crée que si elle sert.
+    const found = existing.find((c) => c.data.parentCollection === root && c.data.name === name)?.key;
+    if (found) ids[id] = found;
+    else if (want.has(id as CollectionId)) ids[id] = await client.createCollection(name, root);
+    else delete ids[id];
   }
   return ids;
 }
@@ -181,7 +192,9 @@ export async function pushToZotero(
 ): Promise<SyncResult> {
   let p = project;
   progress?.('Vérification des collections…');
-  const zoteroCollections = await ensureCollections(client, p);
+  const ftSetBefore = new Set(fulltextKeys(p));
+  const needed = new Set(keys.filter((k) => p.records[k]).flatMap((k) => desiredState(p, k, ftSetBefore).collections));
+  const zoteroCollections = await ensureCollections(client, p, needed);
   p = { ...p, zoteroCollections };
   let structure: StructureResult | null = null;
   if (p.organisation.name) {

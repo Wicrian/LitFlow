@@ -110,6 +110,8 @@ describe('organisation', () => {
 
     const root = collections.find((c) => c.data.name === '4 – Organisation · Sections du mémoire')!;
     expect(root.data.parentCollection).toBe(p.zoteroCollections.root);
+    // Dossiers créés à la demande : seulement « Exclus » (une exclusion), pas les autres étapes.
+    expect(names(p.zoteroCollections.root)).toEqual(['1 – Tri titre-résumé · Exclus', '4 – Organisation · Sections du mémoire']);
     expect(names(root.key)).toContain('Méthodologie');
     const b = items.get('B')!.data;
     expect(b.collections).toContain(p.organisation.categories.find((c) => c.id === metho.id)!.zoteroKey);
