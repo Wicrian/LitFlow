@@ -326,8 +326,16 @@ function Board() {
         )}
       </section>
 
-      {view === 'circle' && <CircleView visible={visible} onAddCategory={() => addCategory(null)} />}
+      {view === 'circle' && <CircleView visible={visible} onAddCategory={() => addCategory(null)} onColumns={() => setView('columns')} />}
 
+      {view === 'columns' && (
+        <div className="row">
+          <button className="btn" onClick={() => setView('circle')}>
+            ◎ Revenir au tri en cercle
+          </button>
+          <span className="small muted">pour classer vite, une référence à la fois</span>
+        </div>
+      )}
       {view === 'columns' && (
       <div className="board">
         {columns.map((col) => (

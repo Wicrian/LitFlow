@@ -6,7 +6,7 @@
 // Une catégorie qui a des sous-catégories ouvre un second cercle.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, CornerDownLeft, SkipForward, Undo2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Columns3, CornerDownLeft, SkipForward, Undo2 } from 'lucide-react';
 import type { Category, RecordItem } from '../types';
 import { setAssignment, toggleMarker } from '../lib/organisation';
 import { authorsShort } from '../lib/text';
@@ -14,7 +14,7 @@ import { useProject } from '../store';
 
 type Bubble = { id: string; label: string; cat: Category | null; kind: 'cat' | 'parent-all' | 'back'; children: number };
 
-export function CircleView({ visible, onAddCategory }: { visible: RecordItem[]; onAddCategory: () => void }) {
+export function CircleView({ visible, onAddCategory, onColumns }: { visible: RecordItem[]; onAddCategory: () => void; onColumns: () => void }) {
   const { project: p, update, markDirty } = useProject();
   const o = p.organisation;
   const [skipped, setSkipped] = useState<string[]>([]);
@@ -242,9 +242,17 @@ export function CircleView({ visible, onAddCategory }: { visible: RecordItem[]; 
         </div>
       </div>
 
+      {!cur && (
+        <button className="btn" onClick={onColumns}>
+          <Columns3 size={16} /> Passer en vue colonnes
+        </button>
+      )}
       {cur && (
         <div className="stack">
           <div className="row" style={{ justifyContent: 'center' }}>
+            <button className="btn small" onClick={onColumns} title="Revoir le classement en colonnes">
+              <Columns3 size={14} /> Vue colonnes
+            </button>
             <button className="btn small" onClick={undo} disabled={!history.length}>
               <Undo2 size={14} /> Annuler <kbd>Z</kbd>
             </button>
