@@ -96,6 +96,20 @@ service d’IA.
 souvent. Elle ne remplace pas un second évaluateur humain dans une revue systématique publiée ; mentionnez son
 usage dans votre méthode.
 
+## Stratégie de recherche (équations par base de données)
+
+Onglet **Recherche** :
+
+1. **Concepts et mots-clés** : une colonne par concept (reprise possible des éléments PICO/SPIDER du protocole) ;
+   les mots d’une colonne sont reliés par OU, les colonnes par ET ; `*` pour la troncature.
+2. **L’équation dans chaque base** : traduction automatique dans la syntaxe de PubMed, Scopus, Web of Science,
+   EBSCOhost, ProQuest, Ovid, Google Scholar, Cairn, Érudit, Repère, ou d’une base ajoutée à la main (opérateurs
+   AND/OR ou ET/OU, troncature, guillemets, parenthèses). Chaque équation est **modifiable et enregistrée** ;
+   avertissements (troncature inconnue, longueur maximale…) et **mode d’emploi ligne par ligne** pour les
+   formulaires de recherche avancée. Chaque profil indique si ses règles sont officielles, observées ou à vérifier.
+3. **Journal des recherches** (PRISMA-S) : date, équation exacte, nombre de résultats, filtres et notes, avec le
+   nombre de références correspondantes dans Zotero ; export CSV.
+
 ## Organiser à votre façon (catégories et marqueurs)
 
 L’onglet **Organisation** permet de ranger les références selon votre logique : sections du mémoire, concepts,

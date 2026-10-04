@@ -563,3 +563,28 @@ details > summary::-webkit-details-marker { display: none; }
   .stack-title { font-size: 0.85rem; }
   .stack-abstract { display: none; }
 }
+
+/* ---- Stratégie de recherche ---- */
+.concepts { display: flex; gap: 0.4rem; overflow-x: auto; align-items: flex-start; padding-bottom: 0.5rem; }
+.concept-wrap { display: flex; align-items: flex-start; gap: 0.4rem; }
+.concept-and { align-self: center; font-family: var(--font-head); font-weight: 700; font-size: 0.8rem; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 0.25rem 0.6rem; }
+.concept-col {
+  width: 240px; flex-shrink: 0; background: var(--panel-strong); border: 1px solid var(--panel-border); border-radius: var(--radius);
+  padding: 0.7rem; display: flex; flex-direction: column; gap: 0.35rem; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+.concept-name { font-family: var(--font-head); font-weight: 600; border: 0 !important; background: transparent !important; padding: 0.3rem 0.2rem !important; }
+.concept-add { align-items: center; justify-content: center; flex-direction: row; gap: 0.3rem; min-height: 120px; color: var(--muted); cursor: pointer; border-style: dashed; font-weight: 500; }
+.term-row { display: flex; align-items: center; gap: 0.3rem; }
+.term-row input { padding: 0.35rem 0.55rem; font-size: 0.9rem; }
+.term-or { font-size: 0.65rem; font-weight: 700; color: var(--muted); width: 22px; flex-shrink: 0; }
+.term-row:first-of-type .term-or { display: none; }
+.icon-btn { border: 0; background: none; cursor: pointer; color: var(--muted); padding: 0.25rem; border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
+.icon-btn:hover { background: var(--inset); color: var(--text); }
+.equation { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.7rem 0.9rem; border-radius: var(--radius); background: var(--inset); }
+.equation code { background: none; font-size: 0.9rem; flex: 1; min-width: 200px; word-break: break-word; }
+.db-card { padding: 1rem 1.1rem; border-radius: var(--radius); background: var(--panel-strong); border: 1px solid var(--panel-border); }
+.db-query { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.85rem; min-height: 5.5rem; }
+.db-warnings { margin: 0; padding-left: 1.2rem; color: var(--maybe); }
+.lines { padding-left: 1.2rem; }
+.lines li { margin-bottom: 0.6rem; }
+.line-text { display: block; flex: 1; font-size: 0.82rem; word-break: break-word; white-space: pre-wrap; padding: 0.4rem 0.55rem; }

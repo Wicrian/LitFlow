@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ClipboardList, Copy, FileText, GitFork, Home as HomeIcon, Layers, LayoutGrid, Library, Palette, RefreshCw, Settings as SettingsIcon, Sparkles, Table2 } from 'lucide-react';
+import { ClipboardList, Copy, FileText, GitFork, Home as HomeIcon, Layers, LayoutGrid, Library, Palette, RefreshCw, Search, Settings as SettingsIcon, Sparkles, Table2 } from 'lucide-react';
 import type { Project, Settings } from './types';
 import { deleteProject, listProjects, loadSettings, saveProject, saveSettings } from './lib/storage';
 import { ProjectProvider, useProject } from './store';
@@ -13,10 +13,11 @@ import { Review } from './components/Review';
 import { Records } from './components/Records';
 import { Prisma } from './components/Prisma';
 import { Organisation } from './components/Organisation';
+import { SearchStrategy } from './components/SearchStrategy';
 import { fulltextKeys, screeningKeys } from './lib/prisma';
 import { findDuplicateGroups } from './lib/dedup';
 
-type View = 'protocol' | 'import' | 'dedup' | 'screening' | 'fulltext' | 'organisation' | 'records' | 'prisma';
+type View = 'protocol' | 'search' | 'import' | 'dedup' | 'screening' | 'fulltext' | 'organisation' | 'records' | 'prisma';
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
@@ -117,6 +118,7 @@ function RailItem({ icon, label, count, active, onClick, alert }: { icon: ReactN
 
 const VIEWS: Record<View, { label: string; title: string; subtitle: string; icon: ReactNode }> = {
   protocol: { label: 'Protocole', title: 'Protocole', subtitle: 'Question, cadre, critères et raisons de votre revue', icon: <ClipboardList /> },
+  search: { label: 'Recherche', title: 'Stratégie de recherche', subtitle: 'Concepts, mots-clés et équation adaptée à chaque base de données', icon: <Search /> },
   import: { label: 'Identification', title: 'Identification', subtitle: 'Vos références lues directement dans Zotero', icon: <Library /> },
   dedup: { label: 'Doublons', title: 'Doublons', subtitle: 'Repérer et écarter les notices en double', icon: <Copy /> },
   screening: { label: 'Tri', title: 'Tri titre-résumé', subtitle: 'Glissez : à droite inclure, à gauche exclure, en haut incertain', icon: <Layers /> },
@@ -147,6 +149,7 @@ function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onS
     fulltext: `${ft.filter((k) => project.fulltext[k] || k in project.notRetrieved).length}/${ft.length}`,
     records: String(Object.keys(project.records).length),
     organisation: project.organisation.name ? String(Object.keys(project.organisation.assignments).length) : undefined,
+    search: project.search.databases.length ? String(project.search.databases.length) : undefined,
   };
 
   const dotClass = { off: 'off', idle: '', pending: 'pending', syncing: 'pending', error: 'error' }[syncStatus.state];
@@ -226,6 +229,7 @@ function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onS
         )}
         {syncStatus.state === 'error' && <div className="notice error" style={{ marginBottom: '1rem' }}>{syncStatus.message}</div>}
         {view === 'protocol' && <Protocol />}
+        {view === 'search' && <SearchStrategy />}
         {view === 'import' && <ImportView onSettings={onSettings} onDone={() => setView('dedup')} />}
         {view === 'dedup' && <Dedup onDone={() => setView('screening')} />}
         {view === 'screening' && <Review stage="screening" />}

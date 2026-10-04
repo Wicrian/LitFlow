@@ -125,6 +125,45 @@ export interface Organisation {
   structureDirty: boolean;
 }
 
+/** Concept de la stratégie de recherche (une colonne de mots-clés reliés par OU). */
+export interface SearchConcept {
+  id: string;
+  name: string;
+  terms: string[];
+}
+
+export interface SearchDatabase {
+  id: string;
+  /** Profil de syntaxe intégré (pubmed, scopus…), ou vide pour une base personnalisée. */
+  profileId: string;
+  name: string;
+  /** Règles d'une base ajoutée par la personne. */
+  custom?: { and: string; or: string; trunc: string; quotes: boolean; parens: boolean; help?: string };
+  /** Équation modifiée à la main (remplace la traduction automatique). */
+  override: string | null;
+  /** Traduction automatique au moment de la modification (pour signaler qu'elle a changé depuis). */
+  overrideBase: string | null;
+  notes: string;
+}
+
+/** Une recherche effectivement lancée (journal, pour PRISMA-S). */
+export interface SearchRun {
+  id: string;
+  dbId: string;
+  date: string;
+  query: string;
+  results: number | null;
+  filters: string;
+  notes: string;
+}
+
+export interface SearchState {
+  concepts: SearchConcept[];
+  field: 'tiab' | 'title' | 'all';
+  databases: SearchDatabase[];
+  runs: SearchRun[];
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -158,6 +197,8 @@ export interface Project {
   fulltext: Record<string, StageDecision>;
   /** Textes intégraux introuvables (PRISMA : « reports not retrieved »). */
   notRetrieved: Record<string, string>;
+  /** Stratégie de recherche : concepts, équations par base, journal. */
+  search: SearchState;
   /** Organisation sur mesure (catégories et marqueurs). */
   organisation: Organisation;
   /** Labels importés de Rayyan (clé item -> labels), écrits dans Zotero en LF:rayyan:… */

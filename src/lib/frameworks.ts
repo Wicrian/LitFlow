@@ -1,3 +1,4 @@
+import { emptySearch } from './search';
 import { emptyOrganisation } from './organisation';
 import type { FrameworkElement, FrameworkId, Project, ReviewType } from '../types';
 
@@ -173,6 +174,7 @@ export function newProject(name: string): Project {
     notRetrieved: {},
     rayyanLabels: {},
     organisation: emptyOrganisation(),
+    search: emptySearch(),
     reasons: structuredClone(DEFAULT_REASONS),
     askReason: { include: true, exclude: true, maybe: true },
     manualCounts: { automationExcluded: 0, otherRemoved: 0, otherMethodsIdentified: [] },
@@ -191,6 +193,7 @@ export function upgradeProject(p: Project): Project {
     sync: { ...base.sync, ...p.sync },
     ai: { ...base.ai, ...p.ai },
     organisation: { ...base.organisation, ...p.organisation },
+    search: { ...base.search, ...p.search },
     askReason: { ...base.askReason, ...p.askReason },
     reasons: { ...base.reasons, ...p.reasons },
   };
