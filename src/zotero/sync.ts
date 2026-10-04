@@ -11,6 +11,8 @@ import type { Decision, Project, RecordItem, StageDecision } from '../types';
 import { fulltextKeys } from '../lib/prisma';
 import { ZoteroClient, type ZCollection, type ZItem, type ZItemData } from './api';
 import { toRecord } from './mapping';
+import { organisationCollectionKeys } from '../lib/organisation';
+import { organisationTargets, syncOrganisationStructure, type StructureResult } from './organisationSync';
 
 export type CollectionId =
   | 'root'
@@ -42,20 +44,24 @@ const DECISION_LABEL: Record<Decision, string> = { include: 'Inclus', exclude: '
 export interface DesiredState {
   collections: CollectionId[];
   tags: string[];
+  /** Sous-collections d'organisation (clés Zotero). */
+  extra: string[];
 }
 
 /** État attendu dans Zotero pour une référence (fonction pure, testée). */
 export function desiredState(p: Project, key: string, fulltextSet?: Set<string>): DesiredState {
   const pre = p.sync.tagPrefix.trim() || 'LF';
   const collections: CollectionId[] = [];
-  const tags: string[] = [];
+  const org = organisationTargets(p, key);
+  const tags: string[] = [...org.tags];
+  const extra = org.collections;
 
   for (const l of p.rayyanLabels?.[key] ?? []) tags.push(`${pre}:rayyan:${l}`);
 
   if (key in p.duplicates) {
     collections.push('duplicates');
     tags.push(`${pre}:doublon`);
-    return { collections, tags };
+    return { collections, tags, extra };
   }
 
   const s = p.screening[key];
@@ -79,7 +85,7 @@ export function desiredState(p: Project, key: string, fulltextSet?: Set<string>)
       }
     }
   }
-  return { collections, tags: [...new Set(tags)] };
+  return { collections, tags: [...new Set(tags)], extra };
 }
 
 /** Calcule la mise à jour à envoyer, ou `null` si l'item est déjà à jour. */
@@ -89,9 +95,9 @@ export function buildItemPatch(
   desired: DesiredState,
 ): Pick<ZItemData, 'key' | 'version' | 'collections' | 'tags'> | null {
   const pre = (p.sync.tagPrefix.trim() || 'LF') + ':';
-  const ours = new Set(Object.values(p.zoteroCollections));
+  const ours = new Set([...Object.values(p.zoteroCollections), ...organisationCollectionKeys(p.organisation)]);
   const current = item.data.collections ?? [];
-  const wanted = desired.collections.map((c) => p.zoteroCollections[c]).filter(Boolean);
+  const wanted = [...desired.collections.map((c) => p.zoteroCollections[c]).filter(Boolean), ...(desired.extra ?? [])];
   const collections = [...current.filter((c) => !ours.has(c)), ...wanted];
 
   const currentTags = item.data.tags ?? [];
@@ -155,6 +161,8 @@ const chunk = <T>(a: T[], n: number) => Array.from({ length: Math.ceil(a.length 
 
 export interface SyncResult {
   project: Project;
+  /** Résultat de la synchronisation de la structure d'organisation (si un plan existe). */
+  structure: StructureResult | null;
   updated: number;
   notes: number;
   failed: string[];
@@ -175,6 +183,12 @@ export async function pushToZotero(
   progress?.('Vérification des collections…');
   const zoteroCollections = await ensureCollections(client, p);
   p = { ...p, zoteroCollections };
+  let structure: StructureResult | null = null;
+  if (p.organisation.name) {
+    progress?.('Mise à jour des collections d’organisation…');
+    structure = await syncOrganisationStructure(client, p, await client.collections());
+    p = { ...p, organisation: structure.org };
+  }
 
   const ftSet = new Set(fulltextKeys(p));
   const failed: string[] = [];
@@ -246,6 +260,7 @@ export async function pushToZotero(
         lastError: failed.length ? failed.slice(0, 5).join('\n') : null,
       },
     },
+    structure,
     updated,
     notes,
     failed,
@@ -264,7 +279,9 @@ export async function importFromZotero(
 ): Promise<{ records: RecordItem[]; sources: Project['sources']; sourceMap: Record<string, string>; libraryVersion: number | null }> {
   if (!p.sourceCollection) throw new Error('Choisissez d’abord une collection source.');
   const all = await client.collections();
-  const ours = new Set(Object.values(p.zoteroCollections));
+  const ours = new Set(
+    [...Object.values(p.zoteroCollections), ...organisationCollectionKeys(p.organisation), p.organisation.rootKey].filter(Boolean),
+  );
   const childrenOf = (key: string) => all.filter((c) => c.data.parentCollection === key && !ours.has(c.key));
   const descendants = (key: string): string[] => childrenOf(key).flatMap((c) => [c.key, ...descendants(c.key)]);
 

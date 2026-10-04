@@ -7,6 +7,7 @@ import { ZoteroClient } from './zotero/api';
 import { pushToZotero } from './zotero/sync';
 import { applyChanges, fetchChanges } from './zotero/pull';
 import { saveSnapshot } from './zotero/snapshot';
+import { mergeStructure, syncOrganisationStructure } from './zotero/organisationSync';
 
 export type SyncStatus = { state: 'off' | 'idle' | 'pending' | 'syncing' | 'error'; message?: string; done?: number; total?: number };
 
@@ -101,13 +102,14 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
     async (keys?: string[]) => {
       if (!client || syncing.current) return;
       // Évite de créer deux fois les collections si une sauvegarde est en cours.
-      if (snapshotting.current) {
+      if (snapshotting.current || pulling.current) {
         setTimeout(() => void syncNow(keys), 2000);
         return;
       }
       const start = ref.current;
       const toSend = keys ?? start.sync.pending;
-      if (!toSend.length) return;
+      const structure = start.organisation.structureDirty || start.organisation.deletedZoteroKeys.length > 0;
+      if (!toSend.length && !structure) return;
       syncing.current = true;
       dirtyDuringSync.current = new Set();
       setSyncStatus({ state: 'syncing', message: 'Synchronisation…' });
@@ -125,6 +127,7 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
             records,
             zoteroCollections: res.project.zoteroCollections,
             zoteroNotes: { ...cur.zoteroNotes, ...res.project.zoteroNotes },
+            organisation: res.structure ? mergeStructure(start.organisation, res.structure, cur.organisation) : cur.organisation,
             sync: {
               ...cur.sync,
               pending: cur.sync.pending.filter((k) => !sent.has(k) || failed.has(k) || dirtyDuringSync.current.has(k)),
@@ -152,6 +155,11 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
     if (start.sync.libraryVersion === null) return;
     pulling.current = true;
     try {
+      // Sous-collections d'organisation créées, renommées ou supprimées dans Zotero.
+      if (start.organisation.name && !start.organisation.structureDirty && !start.organisation.deletedZoteroKeys.length) {
+        const res = await syncOrganisationStructure(client, start, await client.collections());
+        setProject((cur) => ({ ...cur, organisation: mergeStructure(start.organisation, res, cur.organisation) }));
+      }
       const { incoming, libraryVersion } = await fetchChanges(client, start);
       if (!incoming.length) {
         setProject((cur) => ({ ...cur, sync: { ...cur.sync, libraryVersion: libraryVersion ?? cur.sync.libraryVersion } }));
@@ -205,10 +213,11 @@ export function ProjectProvider({ initial, settings, children }: { initial: Proj
 
   // Synchronisation automatique quelques secondes après la dernière décision.
   useEffect(() => {
-    if (!client || !project.sync.auto || !project.sync.pending.length) return;
+    const structure = project.organisation.structureDirty || project.organisation.deletedZoteroKeys.length > 0;
+    if (!client || !project.sync.auto || (!project.sync.pending.length && !structure)) return;
     const t = setTimeout(() => void syncNow(), 3000);
     return () => clearTimeout(t);
-  }, [client, project.sync.auto, project.sync.pending, syncNow]);
+  }, [client, project.sync.auto, project.sync.pending, project.organisation.structureDirty, project.organisation.deletedZoteroKeys, syncNow]);
 
   const status: SyncStatus = !client
     ? { state: 'off' }

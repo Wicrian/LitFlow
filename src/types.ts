@@ -89,6 +89,42 @@ export interface ZoteroLibrary {
   name: string;
 }
 
+/** Catégorie du plan de classement (= sous-collection Zotero). */
+export interface Category {
+  id: string;
+  name: string;
+  /** Catégorie parente (2 niveaux maximum). */
+  parent: string | null;
+  zoteroKey: string | null;
+  /** Nom tel qu'il est dans Zotero lors de la dernière synchronisation. */
+  syncedName: string | null;
+}
+
+/** Marqueur libre (= étiquette Zotero LF:marqueur:…). */
+export interface Marker {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface Organisation {
+  /** Nom du plan (ex. « Sections du mémoire ») ; vide tant qu'aucun plan n'est créé. */
+  name: string;
+  /** « litflow » : collection créée dans « LitFlow – projet » ; « existing » : collection Zotero existante. */
+  rootMode: 'litflow' | 'existing';
+  rootKey: string | null;
+  categories: Category[];
+  /** Référence -> catégories. */
+  assignments: Record<string, string[]>;
+  markers: Marker[];
+  /** Référence -> marqueurs. */
+  markerAssignments: Record<string, string[]>;
+  /** Sous-collections Zotero à supprimer à la prochaine synchronisation. */
+  deletedZoteroKeys: string[];
+  /** La structure (catégories) doit être envoyée vers Zotero. */
+  structureDirty: boolean;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -122,6 +158,8 @@ export interface Project {
   fulltext: Record<string, StageDecision>;
   /** Textes intégraux introuvables (PRISMA : « reports not retrieved »). */
   notRetrieved: Record<string, string>;
+  /** Organisation sur mesure (catégories et marqueurs). */
+  organisation: Organisation;
   /** Labels importés de Rayyan (clé item -> labels), écrits dans Zotero en LF:rayyan:… */
   rayyanLabels: Record<string, string[]>;
   /** Raisons mémorisées, réutilisables d'un clic. */

@@ -19,6 +19,7 @@ export function recordsCsv(p: Project): string {
     'Clé Zotero', 'Titre', 'Auteurs', 'Année', 'Type', 'Publication', 'Langue', 'DOI', 'Sources',
     'Doublon de', 'Tri', 'Raisons (tri)', 'Note (tri)', 'Introuvable',
     'Texte intégral', 'Raisons (texte intégral)', 'Note (texte intégral)', 'Suggestion IA (tri)', 'Raison IA',
+    'Catégories', 'Marqueurs',
   ];
   const rows = Object.values(p.records).map((r) => {
     const s = p.screening[r.key];
@@ -29,6 +30,8 @@ export function recordsCsv(p: Project): string {
       s ? LABEL[s.decision] : '', s?.reasons.join(' | ') ?? '', s?.note ?? '', r.key in p.notRetrieved ? 'oui' : '',
       f ? LABEL[f.decision] : '', f?.reasons.join(' | ') ?? '', f?.note ?? '',
       p.ai.suggestions[r.key] ? LABEL[p.ai.suggestions[r.key].decision] : '', p.ai.suggestions[r.key]?.reason ?? '',
+      (p.organisation.assignments[r.key] ?? []).map((id) => p.organisation.categories.find((c) => c.id === id)?.name).filter(Boolean).join(' | '),
+      (p.organisation.markerAssignments[r.key] ?? []).map((id) => p.organisation.markers.find((m) => m.id === id)?.name).filter(Boolean).join(' | '),
     ];
   });
   return '﻿' + [head, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n');

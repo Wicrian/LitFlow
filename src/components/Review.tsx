@@ -8,6 +8,7 @@ import { useProject } from '../store';
 import { zoteroOpenPdfLink, zoteroSelectLink, type ZItem } from '../zotero/api';
 import { itemTypeLabel } from '../zotero/mapping';
 import { FilterBar } from './FilterBar';
+import { ClassifyPanel } from './ClassifyPanel';
 import { AiProgressText, useAiProgress } from './AiProgress';
 import { runSuggestions } from '../ai/run';
 import { cohenKappa, kappaLabel } from '../lib/agreement';
@@ -255,6 +256,7 @@ export function Review({ stage }: { stage: Stage }) {
                 </button>
               )}
             </div>
+            <ClassifyPanel recordKey={record.key} />
             {stage === 'fulltext' && (
               <FulltextPanel
                 r={record}

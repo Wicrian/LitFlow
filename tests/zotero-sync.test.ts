@@ -48,6 +48,19 @@ function fakeZotero(url: string, init: RequestInit = {}): Response {
     const keys = (u.searchParams.get('itemKey') ?? '').split(',');
     return json(keys.map((k) => items.get(k)).filter(Boolean));
   }
+  const mc = path.match(/^\/collections\/(\w+)$/);
+  if (mc && (method === 'PATCH' || method === 'DELETE')) {
+    const i = collections.findIndex((c) => c.key === mc[1]);
+    if (i < 0) return new Response('not found', { status: 404 });
+    if (method === 'DELETE') {
+      collections.splice(i, 1);
+      for (const it of items.values()) it.data.collections = (it.data.collections ?? []).filter((k) => k !== mc[1]);
+    } else {
+      const c = collections[i];
+      collections[i] = { ...c, version: ++version, data: { ...c.data, ...JSON.parse(String(init.body)) } };
+    }
+    return new Response(null, { status: 204, headers: { 'Last-Modified-Version': String(version) } });
+  }
   if (method === 'POST' && path === '/collections') {
     const [c] = JSON.parse(String(init.body));
     const key = `C${++seq}`;

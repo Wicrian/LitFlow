@@ -1,3 +1,4 @@
+import { emptyOrganisation } from './organisation';
 import type { FrameworkElement, FrameworkId, Project, ReviewType } from '../types';
 
 type Def = { name: string; hint: string; elements: [string, string, string][] };
@@ -171,6 +172,7 @@ export function newProject(name: string): Project {
     fulltext: {},
     notRetrieved: {},
     rayyanLabels: {},
+    organisation: emptyOrganisation(),
     reasons: structuredClone(DEFAULT_REASONS),
     askReason: { include: true, exclude: true, maybe: true },
     manualCounts: { automationExcluded: 0, otherRemoved: 0, otherMethodsIdentified: [] },
@@ -188,6 +190,7 @@ export function upgradeProject(p: Project): Project {
     manualCounts: { ...base.manualCounts, ...p.manualCounts },
     sync: { ...base.sync, ...p.sync },
     ai: { ...base.ai, ...p.ai },
+    organisation: { ...base.organisation, ...p.organisation },
     askReason: { ...base.askReason, ...p.askReason },
     reasons: { ...base.reasons, ...p.reasons },
   };

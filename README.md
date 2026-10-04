@@ -96,6 +96,24 @@ service d’IA.
 souvent. Elle ne remplace pas un second évaluateur humain dans une revue systématique publiée ; mentionnez son
 usage dans votre méthode.
 
+## Organiser à votre façon (catégories et marqueurs)
+
+En plus du parcours PRISMA, l’onglet **Organisation** permet de ranger les références selon votre logique :
+sections du mémoire, concepts, type d’étude, suivi de lecture, ou un plan vide. Une référence peut être classée à
+n’importe quelle étape, même exclue de la revue (ex. exclue pour la question de recherche, gardée pour la
+méthodologie).
+
+- **Catégories** (2 niveaux) → sous-collections Zotero dans `LitFlow – projet › 4 – Organisation · nom du plan`,
+  ou dans une **collection Zotero existante** que LitFlow reprend et continue à développer.
+- **Marqueurs** (⭐ Important, 📌 À citer…) → étiquettes `LF:marqueur:…` ; cliquer sur un marqueur filtre les références.
+- **Tableau en colonnes** : glisser-déposer à la souris (Alt = copier dans une 2e catégorie), toucher une carte sur
+  tablette pour la classer ; boutons de classement rapides pendant le tri et le texte intégral ; classement groupé
+  depuis l’onglet Références.
+- **Dans les deux sens** : glisser une référence dans une de ces sous-collections dans Zotero, en créer, renommer ou
+  supprimer une, ajouter une étiquette `LF:marqueur:…` : LitFlow le reprend.
+- **Supprimer une catégorie** supprime la sous-collection Zotero mais **jamais les références** : LitFlow demande
+  s’il faut les remettre « à classer », les déplacer dans une autre catégorie ou leur donner un marqueur.
+
 ## Reprendre un tri commencé dans Rayyan
 
 Onglet **Identification › Reprendre un tri fait dans Rayyan** : choisissez le fichier `articles.csv` de l’export
@@ -174,7 +192,9 @@ Le dossier `dist/` produit par `npm run build` peut aussi être déposé sur n�
       « Qui peut voir ma revue ? ») + court texte de présentation pour rassurer les nouveaux utilisateurs
 - [ ] Stockage « permanent » du navigateur + rappel de sauvegarde
 - [ ] Héberger le programme de l’assistant IA avec LitFlow (au lieu de jsDelivr)
-- [ ] Autres thèmes de couleurs : classique, chaleureux, moderne, ado
+- [x] Autres thèmes de couleurs : classique, chaleureux, moderne, plein air
+- [ ] Organisation : vue libre (zones à dessiner sur une grande surface)
+- [ ] Organisation : catégorie suggérée par l’IA locale
 
 - [ ] Double tri en aveugle entre personnes, résolution des conflits (le kappa existe déjà pour l’IA)
 - [ ] Assistant IA : explications rédigées par un modèle de langage local (Ollama), en option

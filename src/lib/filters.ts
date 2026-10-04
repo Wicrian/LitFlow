@@ -16,6 +16,9 @@ export interface Filters {
   tag: string;
   screening: StatusFilter;
   fulltext: StatusFilter;
+  /** Catégories du plan de classement (« __none » = non classées). */
+  categories: string[];
+  markers: string[];
 }
 
 export const emptyFilters = (): Filters => ({
@@ -31,6 +34,8 @@ export const emptyFilters = (): Filters => ({
   tag: '',
   screening: 'all',
   fulltext: 'all',
+  categories: [],
+  markers: [],
 });
 
 /** Langue normalisée (« fr », « fre », « Français », « French » -> « fr »). */
@@ -69,6 +74,11 @@ export function applyFilters(p: Project, records: RecordItem[], f: Filters): Rec
     if (pMin !== null && (r.pageCount ?? -Infinity) < pMin) return false;
     if (pMax !== null && (r.pageCount ?? Infinity) > pMax) return false;
     if (tag && !r.zoteroTags.some((t) => normalizeForCompare(t).includes(tag))) return false;
+    if (f.categories?.length) {
+      const mine = p.organisation.assignments[r.key] ?? [];
+      if (!f.categories.some((c) => (c === '__none' ? !mine.length : mine.includes(c)))) return false;
+    }
+    if (f.markers?.length && !f.markers.every((m) => (p.organisation.markerAssignments[r.key] ?? []).includes(m))) return false;
     if (!statusMatches(f.screening, p.screening[r.key]?.decision)) return false;
     if (!statusMatches(f.fulltext, p.fulltext[r.key]?.decision, r.key in p.notRetrieved)) return false;
     if (q) {

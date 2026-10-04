@@ -13,6 +13,7 @@ import { fulltextKeys } from '../lib/prisma';
 import type { ZoteroClient } from './api';
 import { mergeImport, toRecord } from './mapping';
 import { desiredState, type CollectionId } from './sync';
+import { reconcileOrganisation } from './organisationSync';
 
 const TAG_DECISION: Record<string, Decision> = { inclus: 'include', exclu: 'exclude', incertain: 'maybe' };
 
@@ -174,8 +175,12 @@ export function reconcileFromZotero(p: Project, records: RecordItem[]): Reconcil
     }
   }
 
+  // Organisation : références glissées dans une sous-collection, marqueurs ajoutés dans Zotero.
+  const org = reconcileOrganisation(p, records, pending);
+  org.changed.forEach((k) => changed.add(k));
+
   if (!changed.size) return { project: p, changed: [] };
-  return { project: { ...p, screening, fulltext, duplicates, notRetrieved }, changed: [...changed] };
+  return { project: { ...p, screening, fulltext, duplicates, notRetrieved, organisation: org.org }, changed: [...changed] };
 }
 
 /**

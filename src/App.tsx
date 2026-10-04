@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ClipboardList, Copy, FileText, GitFork, Home as HomeIcon, Layers, Library, Palette, RefreshCw, Settings as SettingsIcon, Sparkles, Table2 } from 'lucide-react';
+import { ClipboardList, Copy, FileText, GitFork, Home as HomeIcon, Layers, LayoutGrid, Library, Palette, RefreshCw, Settings as SettingsIcon, Sparkles, Table2 } from 'lucide-react';
 import type { Project, Settings } from './types';
 import { deleteProject, listProjects, loadSettings, saveProject, saveSettings } from './lib/storage';
 import { ProjectProvider, useProject } from './store';
@@ -12,10 +12,11 @@ import { Dedup } from './components/Dedup';
 import { Review } from './components/Review';
 import { Records } from './components/Records';
 import { Prisma } from './components/Prisma';
+import { Organisation } from './components/Organisation';
 import { fulltextKeys, screeningKeys } from './lib/prisma';
 import { findDuplicateGroups } from './lib/dedup';
 
-type View = 'protocol' | 'import' | 'dedup' | 'screening' | 'fulltext' | 'records' | 'prisma';
+type View = 'protocol' | 'import' | 'dedup' | 'screening' | 'fulltext' | 'organisation' | 'records' | 'prisma';
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
@@ -120,6 +121,7 @@ const VIEWS: Record<View, { label: string; title: string; subtitle: string; icon
   dedup: { label: 'Doublons', title: 'Doublons', subtitle: 'Repérer et écarter les notices en double', icon: <Copy /> },
   screening: { label: 'Tri', title: 'Tri titre-résumé', subtitle: 'Glissez : à droite inclure, à gauche exclure, en haut incertain', icon: <Layers /> },
   fulltext: { label: 'Texte intégral', title: 'Texte intégral', subtitle: 'Lisez dans Zotero, décidez ici ou par étiquettes', icon: <FileText /> },
+  organisation: { label: 'Organisation', title: 'Organisation', subtitle: 'Rangez vos références à votre façon : sections, concepts, marqueurs', icon: <LayoutGrid /> },
   records: { label: 'Références', title: 'Références', subtitle: 'Toutes vos références, filtrables et exportables', icon: <Table2 /> },
   prisma: { label: 'PRISMA', title: 'Diagramme PRISMA 2020', subtitle: 'Calculé automatiquement à partir de vos décisions', icon: <GitFork /> },
 };
@@ -144,6 +146,7 @@ function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onS
     screening: `${screen.filter((k) => project.screening[k]).length}/${screen.length}`,
     fulltext: `${ft.filter((k) => project.fulltext[k] || k in project.notRetrieved).length}/${ft.length}`,
     records: String(Object.keys(project.records).length),
+    organisation: project.organisation.name ? String(Object.keys(project.organisation.assignments).length) : undefined,
   };
 
   const dotClass = { off: 'off', idle: '', pending: 'pending', syncing: 'pending', error: 'error' }[syncStatus.state];
@@ -227,6 +230,7 @@ function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onS
         {view === 'dedup' && <Dedup onDone={() => setView('screening')} />}
         {view === 'screening' && <Review stage="screening" />}
         {view === 'fulltext' && <Review stage="fulltext" />}
+        {view === 'organisation' && <Organisation />}
         {view === 'records' && <Records />}
         {view === 'prisma' && <Prisma />}
       </main>

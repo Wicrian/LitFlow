@@ -1,6 +1,8 @@
 import type { RecordItem } from '../types';
 import { facetValues, type Filters, type StatusFilter } from '../lib/filters';
 import { itemTypeLabel } from '../zotero/mapping';
+import { useProject } from '../store';
+import { orderedCategories } from '../lib/organisation';
 
 const LANG: Record<string, string> = { fr: 'Français', en: 'Anglais', es: 'Espagnol', de: 'Allemand', pt: 'Portugais', it: 'Italien', '?': 'Non précisée' };
 const STATUS: [StatusFilter, string][] = [
@@ -21,6 +23,12 @@ interface Props {
 
 export function FilterBar({ records, filters: f, onChange, status = [] }: Props) {
   const facets = facetValues(records);
+  const { project } = useProject();
+  const org = project.organisation;
+  const catCount = (id: string) =>
+    records.filter((r) => (id === '__none' ? !(org.assignments[r.key] ?? []).length : (org.assignments[r.key] ?? []).includes(id))).length;
+  const catLabel = new Map([['__none', 'Non classées'], ...orderedCategories(org).map((c) => [c.id, c.name] as [string, string])]);
+  const markerLabel = new Map(org.markers.map((m) => [m.id, m.name]));
   const set = (patch: Partial<Filters>) => onChange({ ...f, ...patch });
 
   return (
@@ -56,6 +64,24 @@ export function FilterBar({ records, filters: f, onChange, status = [] }: Props)
       <Multi label="Type de document" values={facets.types} selected={f.types} render={itemTypeLabel} onChange={(types) => set({ types })} />
       <Multi label="Langue" values={facets.languages} selected={f.languages} render={(l) => LANG[l] ?? l} onChange={(languages) => set({ languages })} />
       <Multi label="Source" values={facets.sources} selected={f.sources} onChange={(sources) => set({ sources })} />
+      {org.name && (
+        <Multi
+          label="Catégorie"
+          values={['__none', ...orderedCategories(org).map((c) => c.id)].map((id) => [id, catCount(id)] as [string, number])}
+          selected={f.categories ?? []}
+          render={(id) => catLabel.get(id) ?? id}
+          onChange={(categories) => set({ categories })}
+        />
+      )}
+      {org.markers.length > 0 && (
+        <Multi
+          label="Marqueurs (tous)"
+          values={org.markers.map((m) => [m.id, records.filter((r) => (org.markerAssignments[r.key] ?? []).includes(m.id)).length] as [string, number])}
+          selected={f.markers ?? []}
+          render={(id) => markerLabel.get(id) ?? id}
+          onChange={(markers) => set({ markers })}
+        />
+      )}
       <label className="field">
         <span>Années</span>
         <div className="row" style={{ flexWrap: 'nowrap' }}>

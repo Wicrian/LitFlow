@@ -9,11 +9,14 @@ import { zoteroSelectLink } from '../zotero/api';
 import { itemTypeLabel } from '../zotero/mapping';
 import { FilterBar } from './FilterBar';
 import { DECISION_UI, ReasonSheet } from './Review';
+import { ClassifyPanel } from './ClassifyPanel';
+import { categoryLabel, orderedCategories, toggleCategory, toggleMarker } from '../lib/organisation';
 
 const PAGE = 100;
 
 export function Records() {
-  const { project: p, decide, markDirty } = useProject();
+  const { project: p, decide, markDirty, update } = useProject();
+  const [bulkCat, setBulkCat] = useState('');
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [sort, setSort] = useState<{ key: SortKey | ''; dir: 1 | -1 }>({ key: '', dir: 1 });
   const [page, setPage] = useState(0);
@@ -92,6 +95,46 @@ export function Records() {
             type non pertinent. Chaque décision reste modifiable individuellement.
           </p>
         </details>
+        {(p.organisation.categories.length > 0 || p.organisation.markers.length > 0) && (
+          <details>
+            <summary className="small">Classer d’un coup les références filtrées</summary>
+            <div className="row" style={{ marginTop: '0.5rem' }}>
+              <select style={{ width: 'auto' }} value={bulkCat} onChange={(e) => setBulkCat(e.target.value)}>
+                <option value="">— Catégorie ou marqueur —</option>
+                {orderedCategories(p.organisation).map((c) => (
+                  <option key={c.id} value={`c:${c.id}`}>
+                    Catégorie : {categoryLabel(p.organisation, c)}
+                  </option>
+                ))}
+                {p.organisation.markers.map((m) => (
+                  <option key={m.id} value={`m:${m.id}`}>
+                    Marqueur : {m.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="btn"
+                disabled={!bulkCat || !rows.length}
+                onClick={() => {
+                  const [kind, id] = bulkCat.split(':');
+                  const keys = rows.map((r) => r.key);
+                  if (!confirm(`Ajouter ${keys.length} référence(s) ${kind === 'c' ? 'à cette catégorie' : 'à ce marqueur'} ?`)) return;
+                  update((cur) => {
+                    let o = cur.organisation;
+                    for (const k of keys) {
+                      if (kind === 'c' && !(o.assignments[k] ?? []).includes(id)) o = toggleCategory(o, k, id);
+                      if (kind === 'm' && !(o.markerAssignments[k] ?? []).includes(id)) o = toggleMarker(o, k, id);
+                    }
+                    return { ...cur, organisation: o };
+                  });
+                  markDirty(keys);
+                }}
+              >
+                Appliquer aux {rows.length} références filtrées
+              </button>
+            </div>
+          </details>
+        )}
       </section>
 
       <section className="panel table-wrap">
@@ -106,6 +149,7 @@ export function Records() {
               {th('pages', 'Pages')}
               <th>Tri</th>
               <th>Texte intégral</th>
+              {(p.organisation.name || p.organisation.markers.length > 0) && <th>Classement</th>}
             </tr>
           </thead>
           <tbody>
@@ -124,6 +168,15 @@ export function Records() {
                   <DecisionBadge d={p.screening[r.key]?.decision} />
                 </td>
                 <td>{r.key in p.notRetrieved ? <span className="badge">introuvable</span> : <DecisionBadge d={p.fulltext[r.key]?.decision} />}</td>
+                {(p.organisation.name || p.organisation.markers.length > 0) && (
+                  <td className="small">
+                    {(p.organisation.assignments[r.key] ?? []).map((id) => p.organisation.categories.find((c) => c.id === id)?.name).filter(Boolean).join(', ')}{' '}
+                    {(p.organisation.markerAssignments[r.key] ?? []).map((id) => {
+                      const m = p.organisation.markers.find((x) => x.id === id);
+                      return m ? <span key={id} className="marker-dot" style={{ background: m.color, marginLeft: 3 }} title={m.name} /> : null;
+                    })}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -212,6 +265,7 @@ function RecordDetail({ r, onClose }: { r: RecordItem; onClose: () => void }) {
           <span className="muted">Sources : {r.sources.join(', ')}</span>
         </div>
         <div style={{ whiteSpace: 'pre-wrap', maxHeight: '30vh', overflow: 'auto' }}>{r.abstract || <span className="muted">Pas de résumé.</span>}</div>
+        <ClassifyPanel recordKey={r.key} always />
         {r.key in p.duplicates ? (
           <div className="notice">Doublon de : {p.records[p.duplicates[r.key]]?.title}</div>
         ) : (

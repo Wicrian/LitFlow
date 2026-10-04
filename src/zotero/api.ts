@@ -148,6 +148,23 @@ export class ZoteroClient {
     return ok.key;
   }
 
+  /** Renomme (ou déplace) une collection. */
+  async updateCollection(key: string, version: number, data: { name?: string; parentCollection?: string | false }): Promise<void> {
+    await this.request(`${this.prefix}/collections/${key}`, {
+      method: 'PATCH',
+      headers: { 'If-Unmodified-Since-Version': String(version) },
+      body: JSON.stringify(data),
+    });
+  }
+
+  /** Supprime une collection. Les références qu'elle contenait restent dans la bibliothèque. */
+  async deleteCollection(key: string, version: number): Promise<void> {
+    await this.request(`${this.prefix}/collections/${key}`, {
+      method: 'DELETE',
+      headers: { 'If-Unmodified-Since-Version': String(version) },
+    });
+  }
+
   // ---- Items ----
 
   /** Items de premier niveau d'une collection (sans pièces jointes ni notes). */
