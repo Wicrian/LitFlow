@@ -64,9 +64,11 @@ function OrganisationSetup() {
       <section className="panel stack">
         <h2>Organiser vos références à votre façon</h2>
         <p className="muted">
-          En plus du parcours PRISMA, rangez vos références comme vous le souhaitez : par sections de mémoire, par concepts,
-          par type d’étude… Une référence peut être classée à n’importe quelle étape, même si elle est exclue de la revue
-          (par exemple : exclue pour la question de recherche, mais gardée pour la méthodologie).
+          Choisissez la façon d’organiser vos références qui vous convient : par sections de mémoire, par concepts, par type
+          d’étude, par suivi de lecture… Ce classement peut s’utiliser seul ou se combiner avec le parcours de revue
+          systématique (identification, doublons, tri, texte intégral, diagramme PRISMA) : vous pouvez commencer par l’un,
+          ajouter l’autre ensuite, ou ne jamais utiliser le tri. Une référence peut être classée à tout moment, quelle que
+          soit sa décision de tri (par exemple : exclue pour la question de recherche, mais gardée pour la méthodologie).
         </p>
         <ul className="small muted" style={{ margin: 0 }}>
           <li>
@@ -143,7 +145,14 @@ function OrganisationSetup() {
 function Board() {
   const { project: p, update, markDirty } = useProject();
   const o = p.organisation;
-  const [scope, setScope] = useState<Scope>(() => (Object.values(p.fulltext).some((d) => d.decision === 'include') ? 'review' : 'screening'));
+  // Vue par défaut : la plus avancée du parcours de revue s'il est utilisé, sinon toutes les références.
+  const [scope, setScope] = useState<Scope>(() =>
+    Object.values(p.fulltext).some((d) => d.decision === 'include')
+      ? 'review'
+      : Object.values(p.screening).some((d) => d.decision !== 'exclude')
+        ? 'screening'
+        : 'all',
+  );
   const [markerFilter, setMarkerFilter] = useState<string[]>([]);
   const [q, setQ] = useState('');
   const [openKey, setOpenKey] = useState<string | null>(null);

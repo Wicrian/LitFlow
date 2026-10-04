@@ -121,7 +121,7 @@ const VIEWS: Record<View, { label: string; title: string; subtitle: string; icon
   dedup: { label: 'Doublons', title: 'Doublons', subtitle: 'Repérer et écarter les notices en double', icon: <Copy /> },
   screening: { label: 'Tri', title: 'Tri titre-résumé', subtitle: 'Glissez : à droite inclure, à gauche exclure, en haut incertain', icon: <Layers /> },
   fulltext: { label: 'Texte intégral', title: 'Texte intégral', subtitle: 'Lisez dans Zotero, décidez ici ou par étiquettes', icon: <FileText /> },
-  organisation: { label: 'Organisation', title: 'Organisation', subtitle: 'Rangez vos références à votre façon : sections, concepts, marqueurs', icon: <LayoutGrid /> },
+  organisation: { label: 'Organisation', title: 'Organisation', subtitle: 'Votre propre classement — seul ou combiné à la revue systématique', icon: <LayoutGrid /> },
   records: { label: 'Références', title: 'Références', subtitle: 'Toutes vos références, filtrables et exportables', icon: <Table2 /> },
   prisma: { label: 'PRISMA', title: 'Diagramme PRISMA 2020', subtitle: 'Calculé automatiquement à partir de vos décisions', icon: <GitFork /> },
 };

@@ -98,10 +98,11 @@ usage dans votre méthode.
 
 ## Organiser à votre façon (catégories et marqueurs)
 
-En plus du parcours PRISMA, l’onglet **Organisation** permet de ranger les références selon votre logique :
-sections du mémoire, concepts, type d’étude, suivi de lecture, ou un plan vide. Une référence peut être classée à
-n’importe quelle étape, même exclue de la revue (ex. exclue pour la question de recherche, gardée pour la
-méthodologie).
+L’onglet **Organisation** permet de ranger les références selon votre logique : sections du mémoire, concepts,
+type d’étude, suivi de lecture, ou un plan vide. Ce classement s’utilise seul ou en complément du parcours de revue
+systématique (tri, texte intégral, PRISMA) : on peut commencer par l’un, ajouter l’autre ensuite, ou ne jamais
+faire de tri. Une référence peut être classée à tout moment, quelle que soit sa décision de tri (ex. exclue pour la
+question de recherche, gardée pour la méthodologie).
 
 - **Catégories** (2 niveaux) → sous-collections Zotero dans `LitFlow – projet › 4 – Organisation · nom du plan`,
   ou dans une **collection Zotero existante** que LitFlow reprend et continue à développer.
