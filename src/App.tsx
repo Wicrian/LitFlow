@@ -103,22 +103,25 @@ function Frame({ rail, children, onLogo }: { rail: ReactNode; children: ReactNod
   );
 }
 
-function RailItem({ icon, label, count, active, onClick, alert }: { icon: ReactNode; label: string; count?: string; active?: boolean; alert?: boolean; onClick: () => void }) {
+function RailItem({ icon, label, count, active, onClick, alert, badge }: { icon: ReactNode; label: string; count?: string; active?: boolean; alert?: boolean; badge?: string; onClick: () => void }) {
   return (
     <button className={`rail-item ${active ? 'active' : ''}`} onClick={onClick} title={label}>
       <span className="rail-icon">
         {icon}
         {alert && <span className="rail-alert" />}
       </span>
-      <span className="rail-label">{label}</span>
+      <span className="rail-label">
+        {label}
+        {badge && <span className="rail-badge">{badge}</span>}
+      </span>
       {count && <span className="rail-count">{count}</span>}
     </button>
   );
 }
 
-const VIEWS: Record<View, { label: string; title: string; subtitle: string; icon: ReactNode }> = {
+const VIEWS: Record<View, { label: string; title: string; subtitle: string; icon: ReactNode; badge?: string }> = {
   protocol: { label: 'Protocole', title: 'Protocole', subtitle: 'Question, cadre, critères et raisons de votre revue', icon: <ClipboardList /> },
-  search: { label: 'Recherche', title: 'Stratégie de recherche', subtitle: 'Concepts, mots-clés et équation adaptée à chaque base de données', icon: <Search /> },
+  search: { label: 'Recherche', title: 'Stratégie de recherche', subtitle: 'Concepts, mots-clés et équation adaptée à chaque base de données', icon: <Search />, badge: 'test' },
   import: { label: 'Identification', title: 'Identification', subtitle: 'Vos références lues directement dans Zotero', icon: <Library /> },
   dedup: { label: 'Doublons', title: 'Doublons', subtitle: 'Repérer et écarter les notices en double', icon: <Copy /> },
   screening: { label: 'Tri', title: 'Tri titre-résumé', subtitle: 'Glissez : à droite inclure, à gauche exclure, en haut incertain', icon: <Layers /> },
@@ -127,6 +130,14 @@ const VIEWS: Record<View, { label: string; title: string; subtitle: string; icon
   records: { label: 'Références', title: 'Références', subtitle: 'Toutes vos références, filtrables et exportables', icon: <Table2 /> },
   prisma: { label: 'PRISMA', title: 'Diagramme PRISMA 2020', subtitle: 'Calculé automatiquement à partir de vos décisions', icon: <GitFork /> },
 };
+
+/** Les étapes regroupées en grandes familles, comme sur la page d'accueil. */
+const GROUPS: { label: string; views: View[] }[] = [
+  { label: 'Préparer', views: ['protocol', 'search'] },
+  { label: 'Trier', views: ['import', 'dedup', 'screening', 'fulltext'] },
+  { label: 'Organiser', views: ['organisation'] },
+  { label: 'Résultats', views: ['records', 'prisma'] },
+];
 
 function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onSettings: () => void; onTheme: () => void }) {
   const { project, syncStatus, syncNow, client, pullNow, pullInfo, clearPullInfo } = useProject();
@@ -173,16 +184,22 @@ function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onS
       rail={
         <>
           <nav className="rail-nav">
-            {(Object.keys(VIEWS) as View[]).map((id) => (
-              <RailItem
-                key={id}
-                icon={VIEWS[id].icon}
-                label={VIEWS[id].label}
-                count={counts[id]}
-                alert={id === 'dedup' && dupOpen > 0}
-                active={view === id}
-                onClick={() => setView(id)}
-              />
+            {GROUPS.map((g) => (
+              <div key={g.label} className="rail-group">
+                <div className="rail-group-label">{g.label}</div>
+                {g.views.map((id) => (
+                  <RailItem
+                    key={id}
+                    icon={VIEWS[id].icon}
+                    label={VIEWS[id].label}
+                    badge={VIEWS[id].badge}
+                    count={counts[id]}
+                    alert={id === 'dedup' && dupOpen > 0}
+                    active={view === id}
+                    onClick={() => setView(id)}
+                  />
+                ))}
+              </div>
             ))}
           </nav>
           <span className="spacer" />

@@ -237,6 +237,10 @@ svg.spin { animation: spin 1s linear infinite; }
 }
 .rail-nav { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; margin-top: 1rem; }
 .rail { overflow-y: auto; scrollbar-width: none; }
+.rail-group { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+.rail-group + .rail-group { margin-top: 0.55rem; padding-top: 0.5rem; border-top: 1px solid var(--panel-border); }
+.rail-group-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.15rem; }
+.rail-badge { display: inline-block; margin-left: 0.25rem; padding: 0 0.3rem; border-radius: 999px; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; background: var(--maybe-soft); color: var(--maybe); vertical-align: 1px; }
 .logo, .rail-icon { flex-shrink: 0; }
 .rail-item:focus { outline: none; }
 .rail-item:focus-visible .rail-icon { box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow); }
@@ -437,6 +441,10 @@ details > summary::-webkit-details-marker { display: none; }
 }
 .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
 .steps li { counter-increment: s; padding-left: 2.6rem; position: relative; margin-bottom: 0.85rem; }
+.steps li.soon { opacity: 0.55; }
+.steps ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+.steps ul li { padding-left: 0; margin-bottom: 0.35rem; counter-increment: none; }
+.steps ul li::before { content: none; }
 .steps li::before {
   content: counter(s); position: absolute; left: 0; top: -0.1rem; width: 1.9rem; height: 1.9rem; border-radius: 50%;
   background: var(--dark); color: var(--dark-contrast); display: grid; place-items: center; font-size: 0.85rem; font-weight: 600;
@@ -459,6 +467,9 @@ details > summary::-webkit-details-marker { display: none; }
   }
   .rail .logo, .rail > .spacer { display: none; }
   .rail-nav { flex-direction: row; margin: 0; gap: 0.1rem; }
+  .rail-group { flex-direction: row; gap: 0.1rem; }
+  .rail-group + .rail-group { margin: 0 0 0 0.3rem; padding: 0 0 0 0.3rem; border-top: 0; border-left: 1px solid var(--panel-border); }
+  .rail-group-label { display: none; }
   .rail-item { width: 70px; flex-shrink: 0; }
   .rail-icon { width: 40px; height: 40px; box-shadow: none; }
   .rail-icon svg { width: 18px; height: 18px; }

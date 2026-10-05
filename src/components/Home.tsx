@@ -28,8 +28,12 @@ export function Home({ projects, settings, onOpen, onDelete, onSettings, onTheme
         <div className="eyebrow">Revue de littérature libre et gratuite</div>
         <h1>Bonjour 👋 Prêt·e à trier ?</h1>
         <p className="muted">
-          LitFlow est directement connecté à votre bibliothèque Zotero : vos titres, résumés et accents restent intacts,
-          rien n’est réimporté, tout est synchronisé.
+          LitFlow est directement connecté à votre bibliothèque Zotero. Vos titres, résumés et PDF restent dans Zotero :
+          rien n’est importé, tout est synchronisé.
+        </p>
+        <p className="muted small">
+          LitFlow ne supprime jamais vos références ni vos propres étiquettes ou collections : il ajoute seulement des
+          collections, des étiquettes « LF: » et des notes pour trier et organiser.
         </p>
         </div>
         <button className="btn" onClick={onTheme}>
@@ -69,11 +73,30 @@ export function Home({ projects, settings, onOpen, onDelete, onSettings, onTheme
         <section className="panel">
           <h2>Comment ça marche ?</h2>
           <ol className="steps">
-            <li>Dans Zotero, rangez vos résultats de recherche dans une collection, avec une sous-collection par base de données (PubMed, Cairn, Érudit…).</li>
-            <li>Dans LitFlow, choisissez cette collection : les références sont lues directement dans Zotero.</li>
-            <li>Vérifiez les doublons, puis triez titres et résumés en glissant les cartes (← exclure, → inclure, ↑ incertain).</li>
-            <li>Chaque décision crée collections, étiquettes et notes dans Zotero, sous « LitFlow – nom du projet ».</li>
-            <li>Évaluez les textes intégraux, puis exportez le diagramme PRISMA 2020.</li>
+            <li>
+              <strong>Reliez une collection Zotero</strong> : vos résultats de recherche, ou simplement vos lectures.
+            </li>
+            <li>
+              <strong>Prenez ce dont vous avez besoin</strong>, les étapes se combinent librement&nbsp;:
+              <ul>
+                <li className="soon">
+                  <strong>Rechercher</strong> (en test) : vos concepts et l’équation adaptée à chaque base de données ;
+                </li>
+                <li>
+                  <strong>Trier</strong> : doublons, puis cartes à glisser (← exclure, → inclure, ↑ incertain), puis textes intégraux ;
+                </li>
+                <li>
+                  <strong>Organiser</strong> : classer par catégories et marqueurs (sections de mémoire, concepts…), même sans avoir
+                  trié, avec l’onglet «&nbsp;Toutes&nbsp;».
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Tout se retrouve dans Zotero</strong> (collections, étiquettes, notes) et sur vos autres appareils.
+            </li>
+            <li>
+              <strong>Exportez</strong> le diagramme PRISMA 2020 (FR/EN) ou un tableau CSV.
+            </li>
           </ol>
         </section>
       </div>
