@@ -5,6 +5,7 @@ import { newProject } from '../lib/frameworks';
 import { demoProject } from '../lib/demo';
 import { importProjectJson } from '../lib/export';
 import { RestoreDialog } from './RestoreDialog';
+import { Faq } from './Faq';
 
 interface Props {
   projects: Project[];
@@ -161,6 +162,7 @@ export function Home({ projects, settings, onOpen, onDelete, onSettings, onTheme
           automatiquement : « Reprendre depuis Zotero » les retrouve sur n’importe quel appareil.
         </p>
       </section>
+      <Faq />
       {restoring && <RestoreDialog settings={settings} localProjects={projects} onClose={() => setRestoring(false)} onOpen={onOpen} />}
     </main>
   );
