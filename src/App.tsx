@@ -16,6 +16,7 @@ import { Organisation } from './components/Organisation';
 import { SearchStrategy } from './components/SearchStrategy';
 import { fulltextKeys, screeningKeys } from './lib/prisma';
 import { findDuplicateGroups } from './lib/dedup';
+import { IS_TEST } from './lib/env';
 
 type View = 'protocol' | 'search' | 'import' | 'dedup' | 'screening' | 'fulltext' | 'organisation' | 'records' | 'prisma';
 
@@ -36,6 +37,11 @@ export default function App() {
 
   return (
     <>
+      {IS_TEST && (
+        <div className="test-banner">
+          🧪 VERSION TEST : vos revues ici sont séparées de LitFlow officiel. Utilisez la démo ou une bibliothèque Zotero de test.
+        </div>
+      )}
       {current ? (
         <ProjectProvider key={current.id} initial={current} settings={settings}>
           <ProjectShell

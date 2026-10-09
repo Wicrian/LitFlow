@@ -3,9 +3,10 @@
 import { createStore, del, entries, get, set } from 'idb-keyval';
 import type { Project, Settings } from '../types';
 import { upgradeProject } from './frameworks';
+import { NS } from './env';
 
-const store = createStore('litflow', 'projects');
-const SETTINGS_KEY = 'litflow.settings';
+const store = createStore(NS, 'projects');
+const SETTINGS_KEY = `${NS}.settings`;
 
 export async function listProjects(): Promise<Project[]> {
   const all = await entries<string, Project>(store);

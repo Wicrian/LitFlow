@@ -23,6 +23,7 @@ import type { ZCollection } from '../zotero/api';
 import { adoptExistingRoot, organisationRootName } from '../zotero/organisationSync';
 import { ClassifyPanel } from './ClassifyPanel';
 import { CircleView } from './CircleView';
+import { NS } from '../lib/env';
 import { ZoteroNotes } from './ZoteroNotes';
 
 type Scope = 'review' | 'screening' | 'all' | 'excluded';
@@ -158,7 +159,7 @@ function Board() {
   const [markerFilter, setMarkerFilter] = useState<string[]>([]);
   const [view, setViewState] = useState<'circle' | 'columns'>(() => {
     try {
-      return localStorage.getItem('litflow.orgView') === 'columns' ? 'columns' : 'circle';
+      return localStorage.getItem(`${NS}.orgView`) === 'columns' ? 'columns' : 'circle';
     } catch {
       return 'circle';
     }
@@ -166,7 +167,7 @@ function Board() {
   const setView = (v: 'circle' | 'columns') => {
     setViewState(v);
     try {
-      localStorage.setItem('litflow.orgView', v);
+      localStorage.setItem(`${NS}.orgView`, v);
     } catch {
       /* ignoré */
     }

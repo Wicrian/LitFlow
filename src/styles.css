@@ -637,3 +637,6 @@ details > summary::-webkit-details-marker { display: none; }
 .dup-fields dd { margin: 0; overflow-wrap: anywhere; }
 .dup-diff, mark.dup-diff { background: var(--maybe-soft); box-shadow: inset 3px 0 0 var(--maybe); color: inherit; }
 mark.dup-diff { padding: 0 0.3rem; border-radius: 4px; box-shadow: none; }
+
+/* ---- Bandeau de la version test ---- */
+.test-banner { position: sticky; top: 0; z-index: 100; background: #f59e0b; color: #1f1300; font-weight: 700; font-size: 0.82rem; text-align: center; padding: 0.35rem 1rem; }

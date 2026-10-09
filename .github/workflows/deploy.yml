@@ -1,6 +1,11 @@
 # Vérifie le code et publie l'application sur GitHub Pages à chaque push
 # sur la branche par défaut du dépôt.
 # Pour activer : Settings › Pages › Source : « GitHub Actions ».
+#
+# Version test : si la branche « litflow-test » existe, elle est construite
+# elle aussi et publiée sous /test/ (avec des tiroirs de stockage séparés).
+# Après un push sur « litflow-test », relancer ce workflow sur la branche par
+# défaut (Actions › Tests et déploiement › Run workflow) pour la mettre en ligne.
 name: Tests et déploiement
 
 on:
@@ -14,8 +19,11 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  TEST_BRANCH: litflow-test
 
 jobs:
   build:
@@ -29,6 +37,22 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+      - name: Version test (/test/)
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        run: |
+          if git ls-remote --exit-code --heads origin "$TEST_BRANCH" >/dev/null; then
+            git fetch --depth 1 origin "$TEST_BRANCH"
+            git worktree add ../litflow-test FETCH_HEAD
+            cd ../litflow-test
+            npm ci
+            npm test
+            VITE_LITFLOW_TEST=1 npm run build
+            cp -r dist "$GITHUB_WORKSPACE/dist/test"
+          else
+            echo "Pas de branche $TEST_BRANCH : seule la version officielle est publiée."
+          fi
+
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         with:
@@ -38,6 +62,9 @@ jobs:
     if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     needs: build
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

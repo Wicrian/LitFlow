@@ -7,6 +7,7 @@
 // Les références elles-mêmes ne sont pas copiées : elles sont relues dans
 // Zotero au moment de la reprise, puis les étiquettes LF:… font foi.
 
+import { IS_TEST } from '../lib/env';
 import type { Project, ZoteroLibrary } from '../types';
 import { upgradeProject } from '../lib/frameworks';
 import type { ZoteroClient, ZItem } from './api';
@@ -14,7 +15,7 @@ import { mergeImport } from './mapping';
 import { reconcileFromZotero } from './pull';
 import { ensureCollections, importFromZotero } from './sync';
 
-export const SNAPSHOT_TAG = 'LitFlow-projet';
+export const SNAPSHOT_TAG = IS_TEST ? 'LitFlow-projet-test' : 'LitFlow-projet';
 const PART_SIZE = 150_000;
 const MARK = 'litflow:v1';
 

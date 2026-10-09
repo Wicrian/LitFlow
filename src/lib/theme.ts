@@ -1,6 +1,8 @@
 // Ambiances de couleurs. Les couleurs elles-mêmes sont dans styles.css
 // (un bloc [data-theme='…'] par ambiance).
 
+import { NS } from './env';
+
 export const THEMES = [
   { id: 'innovation', name: 'Innovation', hint: 'Mauve translucide', swatch: ['#c7bfe6', '#8b6cf0', '#1f1e26'] },
   { id: 'classique', name: 'Classique', hint: 'Blanc et gris, sobre et élégant', swatch: ['#ececee', '#ffffff', '#111a2e'] },
@@ -10,7 +12,7 @@ export const THEMES = [
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]['id'];
-const KEY = 'litflow.theme';
+const KEY = `${NS}.theme`;
 
 export function loadTheme(): ThemeId {
   try {
