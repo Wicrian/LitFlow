@@ -216,6 +216,11 @@ export function ImportView({ onSettings, onDone }: { onSettings: () => void; onD
                         </option>
                       ))}
                     </select>
+                    <div className="small muted" style={{ marginTop: '0.25rem' }}>
+                      {s.kind === 'other'
+                        ? '→ Ses articles vont directement au texte intégral (vous les avez déjà choisis).'
+                        : '→ Ses articles passent d’abord par le tri titre-résumé.'}
+                    </div>
                   </td>
                 </tr>
               ))}
