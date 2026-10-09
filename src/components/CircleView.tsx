@@ -172,16 +172,6 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
     dropInto(b.id, dx, dy);
   };
 
-  if (!o.categories.length)
-    return (
-      <div className="panel">
-        Aucune catégorie pour l’instant.{' '}
-        <button className="btn small" onClick={() => onAddCategory(null)}>
-          Créer une catégorie
-        </button>
-      </div>
-    );
-
   const n = bubbles.length;
   const s = cur?.key ? p.screening[cur.key]?.decision : undefined;
   const f = cur?.key ? p.fulltext[cur.key]?.decision : undefined;
@@ -291,8 +281,10 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
             </button>
           </div>
           <div className="small muted" style={{ textAlign: 'center' }}>
-            {stack.length} à classer · glissez la carte vers une bulle, ou touchez une ou plusieurs bulles puis « Suivante »
-            {focusCat ? '' : ' · une bulle « ▸ » ouvre ses sous-catégories'}
+            {!o.categories.length
+              ? 'Pas encore de catégorie : touchez « + Catégorie » dès qu’une idée de rangement vous vient en lisant cet article.'
+              : `${stack.length} à classer · glissez la carte vers une bulle, ou touchez une ou plusieurs bulles puis « Suivante »`}
+            {focusCat || !o.categories.some((c) => c.parent) ? '' : ' · une bulle « ▸ » ouvre ses sous-catégories'}
           </div>
 
           {o.markers.length > 0 && (

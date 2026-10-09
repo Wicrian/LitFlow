@@ -12,6 +12,7 @@ import {
   newCategory,
   newMarker,
   orderedCategories,
+  planFromText,
   ORG_TEMPLATES,
   renameCategory,
   type DeleteStrategy,
@@ -40,6 +41,8 @@ export function Organisation() {
 
 function OrganisationSetup() {
   const { project: p, update, client } = useProject();
+  const [door, setDoor] = useState<'propose' | 'know' | 'unsure'>('propose');
+  const [planText, setPlanText] = useState('');
   const [template, setTemplate] = useState('memoire');
   const [name, setName] = useState('');
   const [collections, setCollections] = useState<ZCollection[] | null>(null);
@@ -68,24 +71,73 @@ function OrganisationSetup() {
   return (
     <div className="stack">
       <section className="panel stack">
-        <h2>Organiser vos références à votre façon</h2>
-        <p className="muted">
-          Choisissez la façon d’organiser vos références qui vous convient : par sections de mémoire, par concepts, par type
-          d’étude, par suivi de lecture… Ce classement peut s’utiliser seul ou se combiner avec le parcours de revue
-          systématique (identification, doublons, tri, texte intégral, diagramme PRISMA) : vous pouvez commencer par l’un,
-          ajouter l’autre ensuite, ou ne jamais utiliser le tri. Une référence peut être classée à tout moment, quelle que
-          soit sa décision de tri (par exemple : exclue pour la question de recherche, mais gardée pour la méthodologie).
-        </p>
-        <ul className="small muted" style={{ margin: 0 }}>
-          <li>
-            <strong>Catégories</strong> → des sous-collections Zotero, dans « LitFlow – {p.name} › 4 – Organisation · … ».
-          </li>
-          <li>
-            <strong>Marqueurs</strong> (⭐ Important, 📌 À citer…) → des étiquettes Zotero <code>{p.sync.tagPrefix}:marqueur:…</code>.
-          </li>
-        </ul>
+        <h2>Comment voulez-vous ranger vos articles ?</h2>
+        <div className="theme-grid">
+          {(
+            [
+              ['propose', '💡 Proposez-moi un plan', 'Un modèle prêt à l’emploi, modifiable en route'],
+              ['know', '✍️ Je sais déjà', 'Tapez vos catégories et sous-catégories'],
+              ['unsure', '🌱 Je ne sais pas encore', 'Commencez sans plan : il naîtra en classant'],
+            ] as const
+          ).map(([id, title, hint]) => (
+            <button key={id} className={`theme-card ${door === id ? 'on' : ''}`} onClick={() => setDoor(id)}>
+              <strong>{title}</strong>
+              <span className="small muted">{hint}</span>
+            </button>
+          ))}
+        </div>
+        <details className="small muted">
+          <summary>Comment ça se retrouve dans Zotero ?</summary>
+          <ul style={{ margin: '0.4rem 0 0' }}>
+            <li>
+              <strong>Catégories</strong> → des sous-collections Zotero, dans « LitFlow – {p.name} › 4 – Organisation · … ».
+            </li>
+            <li>
+              <strong>Marqueurs</strong> (⭐ Important, 📌 À citer…) → des étiquettes Zotero <code>{p.sync.tagPrefix}:marqueur:…</code>.
+            </li>
+            <li>Tous vos articles peuvent être classés, triés ou non. Rien n’est jamais supprimé de Zotero.</li>
+          </ul>
+        </details>
       </section>
 
+      {door === 'know' && (
+        <section className="panel stack">
+          <h3>Votre plan</h3>
+          <label className="field">
+            <span>Une catégorie par ligne · commencez la ligne par un tiret « - » pour une sous-catégorie</span>
+            <textarea
+              rows={7}
+              value={planText}
+              placeholder={'Introduction\nCadre théorique\n- Leadership\n- Formation des élus\nMéthodologie\nDiscussion'}
+              onChange={(e) => setPlanText(e.target.value)}
+            />
+          </label>
+          <div className="row" style={{ alignItems: 'flex-end' }}>
+            <label className="field" style={{ flex: 1, minWidth: 240 }}>
+              <span>Nom du plan (modifiable ensuite)</span>
+              <input type="text" value={name} placeholder="Mon plan" onChange={(e) => setName(e.target.value)} />
+            </label>
+            <button className="btn primary" disabled={!planText.trim()} onClick={() => update((cur) => ({ ...cur, organisation: planFromText(cur, name, planText) }))}>
+              Créer mon plan
+            </button>
+          </div>
+        </section>
+      )}
+
+      {door === 'unsure' && (
+        <section className="panel stack">
+          <h3>Pas de souci, le plan viendra en lisant</h3>
+          <p className="muted">
+            Vous allez voir vos articles un par un. Quand une idée de catégorie vous vient, touchez la bulle « + Catégorie » :
+            elle apparaît aussitôt dans le cercle. Les marqueurs ⭐ Important et 📌 À citer sont déjà prêts.
+          </p>
+          <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => update((cur) => ({ ...cur, organisation: fromTemplate(cur, 'vide', name || 'Mon plan') }))}>
+            Commencer sans plan →
+          </button>
+        </section>
+      )}
+
+      {door === 'propose' && (
       <section className="panel stack">
         <h3>Partir d’un modèle</h3>
         <div className="theme-grid">
@@ -107,8 +159,9 @@ function OrganisationSetup() {
           </button>
         </div>
       </section>
+      )}
 
-      {client && (
+      {client && door !== 'unsure' && (
         <section className="panel stack">
           <h3>… ou reprendre une collection Zotero existante</h3>
           <p className="small muted">

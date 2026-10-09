@@ -13,7 +13,7 @@ const KINDS: [SourceKind, string][] = [
   ['other', 'Autre méthode (citations, sites web, littérature grise…)'],
 ];
 
-export function ImportView({ onSettings, onDone }: { onSettings: () => void; onDone: () => void }) {
+export function ImportView({ onSettings, onDone, compact = false }: { onSettings: () => void; onDone: () => void; compact?: boolean }) {
   const { project: p, update, settings, client, markDirty, syncNow } = useProject();
   const [libraries, setLibraries] = useState<ZoteroLibrary[]>([]);
   const [collections, setCollections] = useState<ZCollection[]>([]);
@@ -94,7 +94,7 @@ export function ImportView({ onSettings, onDone }: { onSettings: () => void; onD
   return (
     <div className="stack">
       <section className="panel stack">
-        <h2>Identification : lier la revue à Zotero</h2>
+        {!compact && <h2>Identification : lier la revue à Zotero</h2>}
         {!settings.apiKey ? (
           <div className="notice warn">
             Aucune clé API Zotero. <button className="btn small" onClick={onSettings}>Configurer la connexion</button>
@@ -140,12 +140,19 @@ export function ImportView({ onSettings, onDone }: { onSettings: () => void; onD
                 </select>
               </label>
             )}
+            {compact && p.mode !== 'systematic' ? (
+              <div className="notice small">
+                Choisissez la collection sur laquelle vous voulez travailler. LitFlow ne la modifie jamais : il crée à côté une
+                collection « LitFlow – {p.name} ».
+              </div>
+            ) : (
             <div className="notice small">
               Conseil : créez dans Zotero une collection pour la revue, avec une <strong>sous-collection par source</strong>{' '}
               (ex. « PubMed », « Cairn », « Érudit », « Recherche par citations »). Chaque sous-collection sera comptée
               séparément dans le diagramme PRISMA. LitFlow ne modifie jamais ces collections : il crée à côté une collection
               « LitFlow – {p.name} ».
             </div>
+            )}
             <div className="row">
               <button className="btn primary" disabled={!client || !p.sourceCollection || !!busy} onClick={doImport}>
                 {total ? '⟳ Actualiser depuis Zotero' : 'Importer depuis Zotero'}
@@ -174,13 +181,13 @@ export function ImportView({ onSettings, onDone }: { onSettings: () => void; onD
           <div className="notice">
             {result}{' '}
             <button className="btn small" onClick={onDone}>
-              Passer aux doublons →
+              {compact ? 'Continuer →' : 'Passer aux doublons →'}
             </button>
           </div>
         )}
       </section>
 
-      {p.sources.length > 0 && (
+      {!compact && p.sources.length > 0 && (
         <section className="panel stack">
           <h2>Sources ({total} références)</h2>
           <p className="small muted">
@@ -228,7 +235,7 @@ export function ImportView({ onSettings, onDone }: { onSettings: () => void; onD
           </table>
         </section>
       )}
-      {total > 0 && <RayyanImport />}
+      {!compact && total > 0 && <RayyanImport />}
     </div>
   );
 }

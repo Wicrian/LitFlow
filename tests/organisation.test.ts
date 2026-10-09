@@ -171,3 +171,19 @@ describe('protection de la collection source', () => {
     expect(o.categories.map((c) => c.name)).toEqual(['Chapitre 1']);
   });
 });
+
+import { planFromText } from '../src/lib/organisation';
+import { newProject as np2 } from '../src/lib/frameworks';
+
+describe('plan tapé à la main', () => {
+  it('crée catégories et sous-catégories', () => {
+    const o = planFromText(np2('x'), 'Mémoire', 'Introduction\nCadre théorique\n  Leadership\n- Formation des élus\nMéthodologie\n\n');
+    expect(o.name).toBe('Mémoire');
+    const cadre = o.categories.find((c) => c.name === 'Cadre théorique')!;
+    expect(o.categories.filter((c) => c.parent === cadre.id).map((c) => c.name)).toEqual(['Leadership', 'Formation des élus']);
+    expect(o.categories.filter((c) => !c.parent).map((c) => c.name)).toEqual(['Introduction', 'Cadre théorique', 'Méthodologie']);
+  });
+  it('une première ligne indentée reste une catégorie', () => {
+    expect(planFromText(np2('x'), '', '  Seule').categories[0].parent).toBeNull();
+  });
+});

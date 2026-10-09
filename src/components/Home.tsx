@@ -2,6 +2,7 @@ import { Palette } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { Project, Settings } from '../types';
 import { newProject } from '../lib/frameworks';
+import { newGuide } from '../lib/guide';
 import { demoProject } from '../lib/demo';
 import { importProjectJson } from '../lib/export';
 import { RestoreDialog } from './RestoreDialog';
@@ -52,11 +53,11 @@ export function Home({ projects, settings, onOpen, onDelete, onSettings, onTheme
               value={name}
               placeholder="ex. Soutien par les pairs en santé mentale"
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && name.trim() && onOpen(newProject(name.trim()))}
+              onKeyDown={(e) => e.key === 'Enter' && name.trim() && onOpen({ ...newProject(name.trim()), guide: newGuide() })}
             />
           </label>
           <div className="row">
-            <button className="btn primary" disabled={!name.trim()} onClick={() => onOpen(newProject(name.trim()))}>
+            <button className="btn primary" disabled={!name.trim()} onClick={() => onOpen({ ...newProject(name.trim()), guide: newGuide() })}>
               Créer le projet
             </button>
             <button className="btn" onClick={() => onOpen(demoProject())}>

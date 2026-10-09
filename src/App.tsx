@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ClipboardList, Copy, FileText, GitFork, Home as HomeIcon, Layers, LayoutGrid, Library, Palette, RefreshCw, Search, Settings as SettingsIcon, Sparkles, Table2 } from 'lucide-react';
+import { ClipboardList, Compass, Copy, FileText, GitFork, Home as HomeIcon, Layers, LayoutGrid, Library, Minus, Palette, Plus, RefreshCw, Search, Settings as SettingsIcon, Sparkles, Table2 } from 'lucide-react';
 import type { Project, Settings } from './types';
 import { deleteProject, listProjects, loadSettings, saveProject, saveSettings } from './lib/storage';
 import { ProjectProvider, useProject } from './store';
@@ -17,8 +17,11 @@ import { SearchStrategy } from './components/SearchStrategy';
 import { fulltextKeys, screeningKeys } from './lib/prisma';
 import { findDuplicateGroups } from './lib/dedup';
 import { IS_TEST } from './lib/env';
+import { firstView, visibleViews, type ViewId } from './lib/guide';
+import { Onboarding } from './components/Onboarding';
+import { Guide } from './components/Guide';
 
-type View = 'protocol' | 'search' | 'import' | 'dedup' | 'screening' | 'fulltext' | 'organisation' | 'records' | 'prisma';
+type View = ViewId;
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
@@ -109,9 +112,9 @@ function Frame({ rail, children, onLogo }: { rail: ReactNode; children: ReactNod
   );
 }
 
-function RailItem({ icon, label, count, active, onClick, alert, badge }: { icon: ReactNode; label: string; count?: string; active?: boolean; alert?: boolean; badge?: string; onClick: () => void }) {
+function RailItem({ icon, label, count, active, onClick, alert, badge, pulse }: { icon: ReactNode; label: string; count?: string; active?: boolean; alert?: boolean; badge?: string; pulse?: boolean; onClick: () => void }) {
   return (
-    <button className={`rail-item ${active ? 'active' : ''}`} onClick={onClick} title={label}>
+    <button className={`rail-item ${active ? 'active' : ''} ${pulse ? 'pulse' : ''}`} onClick={onClick} title={label}>
       <span className="rail-icon">
         {icon}
         {alert && <span className="rail-alert" />}
@@ -146,9 +149,23 @@ const GROUPS: { label: string; views: View[] }[] = [
 ];
 
 function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onSettings: () => void; onTheme: () => void }) {
-  const { project, syncStatus, syncNow, client, pullNow, pullInfo, clearPullInfo } = useProject();
+  const { project, update, syncStatus, syncNow, client, pullNow, pullInfo, clearPullInfo } = useProject();
   const hasRecords = Object.keys(project.records).length > 0;
-  const [view, setView] = useState<View>(hasRecords ? 'screening' : project.library ? 'import' : 'protocol');
+  const [view, setViewState] = useState<View>(() =>
+    project.mode ? (hasRecords ? (project.mode === 'organise' ? 'organisation' : 'screening') : 'import') : hasRecords ? 'screening' : project.library ? 'import' : 'protocol',
+  );
+  const [pulse, setPulse] = useState<View | null>(null);
+  const setView = (v: View) => {
+    setViewState(v);
+    if (project.guide?.active && !project.guide.visited.includes(v))
+      update((cur) => ({ ...cur, guide: { ...cur.guide!, visited: [...cur.guide!.visited, v] } }));
+  };
+  /** Depuis le guide : ouvre l'écran et fait briller son bouton dans la barre. */
+  const go = (v: View) => {
+    setView(v);
+    setPulse(v);
+    setTimeout(() => setPulse(null), 2400);
+  };
 
   const screen = screeningKeys(project);
   const ft = fulltextKeys(project);
@@ -190,7 +207,9 @@ function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onS
       rail={
         <>
           <nav className="rail-nav">
-            {GROUPS.map((g) => (
+            {GROUPS.map((g) => ({ ...g, views: visibleViews(project, g.views) }))
+              .filter((g) => g.views.length)
+              .map((g) => (
               <div key={g.label} className="rail-group">
                 <div className="rail-group-label">{g.label}</div>
                 {g.views.map((id) => (
@@ -202,13 +221,26 @@ function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onS
                     count={counts[id]}
                     alert={id === 'dedup' && dupOpen > 0}
                     active={view === id}
+                    pulse={pulse === id}
                     onClick={() => setView(id)}
                   />
                 ))}
               </div>
             ))}
+            {project.mode && project.mode !== 'systematic' && (
+              <RailItem
+                icon={project.guide?.showAll ? <Minus /> : <Plus />}
+                label={project.guide?.showAll ? 'Moins d’étapes' : '+ étapes'}
+                onClick={() =>
+                  update((cur) => ({ ...cur, guide: { wizard: false, active: false, visited: [], ...cur.guide, showAll: !cur.guide?.showAll } }))
+                }
+              />
+            )}
           </nav>
           <span className="spacer" />
+          {project.mode && !project.guide?.active && (
+            <RailItem icon={<Compass />} label="Guide" onClick={() => update((cur) => ({ ...cur, guide: { wizard: false, showAll: false, visited: [], ...cur.guide, active: true } }))} />
+          )}
           <RailItem icon={<HomeIcon />} label="Mes revues" onClick={onHome} />
           <RailItem icon={<Palette />} label="Style" onClick={onTheme} />
           <RailItem icon={<SettingsIcon />} label="Zotero" onClick={onSettings} />
@@ -254,13 +286,23 @@ function ProjectShell({ onHome, onSettings, onTheme }: { onHome: () => void; onS
         {view === 'protocol' && <Protocol />}
         {view === 'search' && <SearchStrategy />}
         {view === 'import' && <ImportView onSettings={onSettings} onDone={() => setView('dedup')} />}
-        {view === 'dedup' && <Dedup onDone={() => setView('screening')} />}
+        {view === 'dedup' && <Dedup onDone={() => setView(project.mode === 'organise' ? 'organisation' : 'screening')} />}
         {view === 'screening' && <Review stage="screening" />}
         {view === 'fulltext' && <Review stage="fulltext" />}
         {view === 'organisation' && <Organisation />}
         {view === 'records' && <Records />}
         {view === 'prisma' && <Prisma />}
       </main>
+      {project.guide?.active && !project.guide.wizard && <Guide openDuplicates={dupOpen} onGo={go} />}
+      {project.guide?.wizard && (
+        <Onboarding
+          onSettings={onSettings}
+          onFinish={(full) => {
+            update((cur) => ({ ...cur, guide: { ...cur.guide!, wizard: false, active: !full, showAll: full } }));
+            setViewState(full ? (Object.keys(project.records).length ? 'screening' : 'import') : firstView(project, dupOpen));
+          }}
+        />
+      )}
     </Frame>
   );
 }

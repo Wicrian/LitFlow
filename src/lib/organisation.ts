@@ -188,3 +188,25 @@ export function organisationCollectionKeys(o: Organisation): string[] {
     (k): k is string => !!k,
   );
 }
+
+/**
+ * Plan tapé à la main : une catégorie par ligne ; une ligne qui commence par
+ * des espaces, un tiret ou « > » devient une sous-catégorie de la précédente.
+ */
+export function planFromText(p: Project, planName: string, text: string): Organisation {
+  const base = fromTemplate(p, 'vide', planName || 'Mon plan');
+  const categories: Category[] = [];
+  let parent: Category | null = null;
+  for (const raw of text.split('\n')) {
+    if (!raw.trim()) continue;
+    const isSub = /^(\s{2,}|\t|\s*[-–•>]\s*)/.test(raw) && !!parent;
+    const name = raw.replace(/^[\s\-–•>]+/, '').trim();
+    if (!name) continue;
+    if (isSub) categories.push(newCategory(name, parent!.id));
+    else {
+      parent = newCategory(name);
+      categories.push(parent);
+    }
+  }
+  return { ...base, categories };
+}

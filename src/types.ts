@@ -172,6 +172,19 @@ export interface SearchState {
   runs: SearchRun[];
 }
 
+export type ReviewMode = 'organise' | 'sort' | 'systematic';
+
+export interface GuideState {
+  /** Écrans de démarrage en cours. */
+  wizard: boolean;
+  /** Liste « Pour bien démarrer » affichée. */
+  active: boolean;
+  /** Toutes les étapes visibles dans la barre, quel que soit le niveau. */
+  showAll: boolean;
+  /** Écrans déjà visités (pour cocher « Voir le diagramme PRISMA »…). */
+  visited: string[];
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -209,6 +222,10 @@ export interface Project {
   search: SearchState;
   /** Organisation sur mesure (catégories et marqueurs). */
   organisation: Organisation;
+  /** Jusqu'où la personne veut aller (choisi au démarrage) ; absent = interface complète. */
+  mode?: ReviewMode;
+  /** Accueil et guide « Pour bien démarrer ». */
+  guide?: GuideState;
   /** Labels importés de Rayyan (clé item -> labels), écrits dans Zotero en LF:rayyan:… */
   rayyanLabels: Record<string, string[]>;
   /** Raisons mémorisées, réutilisables d'un clic. */
