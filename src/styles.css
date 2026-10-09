@@ -629,3 +629,11 @@ details > summary::-webkit-details-marker { display: none; }
 .seg-count { font-size: 0.72rem; opacity: 0.6; margin-left: 0.15rem; }
 .notes-badge { display: inline-flex; align-items: center; gap: 0.2rem; border: 1px solid var(--maybe); background: var(--maybe-soft); color: var(--text); border-radius: 999px; padding: 0.1rem 0.55rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 .notes-badge:hover { filter: brightness(0.97); }
+
+/* ---- Doublons : informations pour décider ---- */
+.dup-fields { margin: 0.45rem 0 0; display: grid; gap: 0.15rem; font-size: 0.84rem; }
+.dup-fields > div { display: grid; grid-template-columns: 7.2rem 1fr; gap: 0.5rem; padding: 0.05rem 0.3rem; border-radius: 6px; }
+.dup-fields dt { color: var(--muted); }
+.dup-fields dd { margin: 0; overflow-wrap: anywhere; }
+.dup-diff, mark.dup-diff { background: var(--maybe-soft); box-shadow: inset 3px 0 0 var(--maybe); color: inherit; }
+mark.dup-diff { padding: 0 0.3rem; border-radius: 4px; box-shadow: none; }

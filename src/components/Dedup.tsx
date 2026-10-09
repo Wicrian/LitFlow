@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react';
 import { runAiDuplicates } from '../ai/run';
 import { AiProgressText, useAiProgress } from './AiProgress';
 import type { RecordItem } from '../types';
-import { findDuplicateGroups, type DuplicateGroup } from '../lib/dedup';
-import { authorsShort } from '../lib/text';
+import { differingFields, dupFields, findDuplicateGroups, partsWarning, type DuplicateGroup } from '../lib/dedup';
 import { useProject } from '../store';
 import { itemTypeLabel } from '../zotero/mapping';
+import { ZoteroNotes } from './ZoteroNotes';
 
 const REASON: Record<DuplicateGroup['reason'], string> = {
   doi: 'Même DOI',
@@ -140,11 +140,22 @@ export function Dedup({ onDone }: { onDone: () => void }) {
                 Confirmer
               </button>
             </div>
-            <div className="dup-group">
-              {g.keys.filter((k) => !(k in p.duplicates)).map((k) => (
-                <DupItem key={k} r={p.records[k]} keep={k === keep} onClick={() => setKeepChoice({ ...keepChoice, [g.id]: k })} />
-              ))}
-            </div>
+            {(() => {
+              const recs = g.keys.filter((k) => !(k in p.duplicates)).map((k) => p.records[k]);
+              const diffs = differingFields(recs);
+              const warn = partsWarning(recs);
+              return (
+                <>
+                  {warn && <div className="notice warn small">⚠️ {warn}</div>}
+                  <div className="dup-group">
+                    {recs.map((r) => (
+                      <DupItem key={r.key} r={r} diffs={diffs} keep={r.key === keep} onClick={() => setKeepChoice({ ...keepChoice, [g.id]: r.key })} />
+                    ))}
+                  </div>
+                  {diffs.size > 0 && <div className="small muted">Les informations <mark className="dup-diff">surlignées</mark> diffèrent d’une notice à l’autre.</div>}
+                </>
+              );
+            })()}
           </section>
         );
       })}
@@ -182,22 +193,49 @@ export function Dedup({ onDone }: { onDone: () => void }) {
   );
 }
 
-function DupItem({ r, keep, onClick }: { r: RecordItem; keep: boolean; onClick: () => void }) {
+function DupItem({ r, keep, diffs, onClick }: { r: RecordItem; keep: boolean; diffs: Set<string>; onClick: () => void }) {
+  const { project: p } = useProject();
+  const [notes, setNotes] = useState(false);
+  const attached = r.numChildren ?? 0;
   return (
     <div className={`dup-item ${keep ? 'keep' : ''}`} onClick={onClick}>
       <div className="row small">
         <span className={`badge ${keep ? 'include' : ''}`}>{keep ? 'À conserver' : 'Doublon'}</span>
+        <span className={`badge ${diffs.has('type') ? 'dup-diff' : ''}`}>{itemTypeLabel(r.itemType)}</span>
         <span className="muted">{r.sources.join(', ')}</span>
       </div>
-      <div className="title">{r.title}</div>
-      <div className="muted">
-        {authorsShort(r.creators)} · {r.year ?? 's.d.'} · {itemTypeLabel(r.itemType)}
+      <div className="title">{r.title || '(sans titre)'}</div>
+      <dl className="dup-fields">
+        {dupFields(r).map((f) => (
+          <div key={f.id} className={diffs.has(f.id) ? 'dup-diff' : ''}>
+            <dt>{f.label}</dt>
+            <dd>{f.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="row small" style={{ marginTop: '0.4rem' }}>
+        {attached > 0 ? (
+          <span className="badge maybe">📎 {attached} note(s) ou pièce(s) jointe(s) dans Zotero</span>
+        ) : (
+          <span className="muted">Aucune note ni pièce jointe dans Zotero</span>
+        )}
+        {attached > 0 && p.library && (
+          <button
+            className="btn small"
+            onClick={(e) => {
+              e.stopPropagation();
+              setNotes((n) => !n);
+            }}
+          >
+            {notes ? 'Masquer' : 'Voir mes notes'}
+          </button>
+        )}
       </div>
-      <div className="muted">{r.publication}</div>
-      {r.doi && <div className="small">DOI : {r.doi}</div>}
-      <div className="small muted">
-        {r.abstract ? `Résumé : ${r.abstract.length} caractères` : 'Pas de résumé'} · clé {r.key}
-      </div>
+      {notes && (
+        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: '0.4rem' }}>
+          <ZoteroNotes recordKey={r.key} defaultOpen />
+        </div>
+      )}
     </div>
   );
 }

@@ -21,6 +21,8 @@ export function completeness(r: RecordItem): number {
     (r.pages ? 1 : 0) +
     (r.creators.length ? 1 : 0) +
     (r.language ? 0.5 : 0) +
+    // La notice qui porte vos notes ou le PDF passe avant tout le reste.
+    (r.numChildren ? 6 : 0) +
     Math.min(r.abstract.length / 2000, 1)
   );
 }
@@ -99,4 +101,64 @@ export function findDuplicateGroups(records: RecordItem[], threshold = 0.92): Du
     out.push({ id: sorted.join('+'), keys: sorted, reason: reasonOf.get(root) ?? 'similar', suggestedKeep });
   }
   return out.sort((a, b) => rank[a.reason] - rank[b.reason]);
+}
+
+// ---- Aide à la décision : ce qui distingue les notices d'un groupe ----
+
+export interface DupField {
+  id: string;
+  label: string;
+  value: string;
+}
+
+const names = (r: RecordItem, editors: boolean) =>
+  r.creators
+    .filter((c) => (c.creatorType === 'editor' || c.creatorType === 'seriesEditor') === editors)
+    .map((c) => c.lastName || c.name || '')
+    .filter(Boolean);
+
+/** Champs utiles pour reconnaître une notice, selon son type (livre, chapitre, article…). */
+export function dupFields(r: RecordItem): DupField[] {
+  const book = r.itemType === 'book' || r.itemType === 'bookSection';
+  const f: DupField[] = [];
+  const add = (id: string, label: string, value: string | undefined | null) => value && f.push({ id, label, value });
+  const authors = names(r, false);
+  const editors = names(r, true);
+  add('authors', 'Auteurs', authors.length > 4 ? `${authors.slice(0, 4).join(', ')} et al.` : authors.join(', '));
+  add('editors', 'Sous la dir. de', editors.join(', '));
+  add('year', 'Année', r.year ? String(r.year) : r.date);
+  if (r.itemType === 'bookSection') add('bookTitle', 'Dans le livre', r.bookTitle || r.publication);
+  else add('publication', book ? 'Éditeur' : 'Publié dans', book ? r.publisher || r.publication : r.publication);
+  if (r.itemType === 'bookSection') add('publisher', 'Éditeur', r.publisher);
+  add('volume', 'Volume', [r.volume && `vol. ${r.volume}`, r.issue && `n° ${r.issue}`].filter(Boolean).join(', '));
+  add('pages', 'Pages', r.pages);
+  if (book) add('isbn', 'ISBN', r.isbn);
+  add('doi', 'DOI', r.doi);
+  add('abstract', 'Début du résumé', r.abstract ? r.abstract.slice(0, 160) + (r.abstract.length > 160 ? '…' : '') : '');
+  return f;
+}
+
+/** Champs dont la valeur diffère d'une notice à l'autre (accents et casse ignorés). */
+export function differingFields(records: RecordItem[]): Set<string> {
+  const norm = (v: string) => normalizeForCompare(v).replace(/\s+/g, '');
+  const byId = new Map<string, Set<string>>();
+  for (const r of records) for (const fl of dupFields(r)) byId.set(fl.id, (byId.get(fl.id) ?? new Set()).add(norm(fl.value)));
+  const out = new Set<string>();
+  for (const [id, vals] of byId) {
+    // Différent si les valeurs ne concordent pas ; une valeur absente d'un côté n'est pas une différence.
+    if (vals.size > 1 && id !== 'abstract') out.add(id);
+  }
+  if (new Set(records.map((r) => r.itemType)).size > 1) out.add('type');
+  return out;
+}
+
+/** Avertissement quand des notices ressemblent à des parties différentes d'un livre. */
+export function partsWarning(records: RecordItem[]): string | null {
+  const parts = records.filter((r) => r.itemType === 'bookSection');
+  if (parts.length < 2) return null;
+  const d = differingFields(parts);
+  if (d.has('bookTitle')) return 'Ces chapitres viennent de livres différents : ce ne sont probablement pas des doublons.';
+  if (d.has('pages')) return 'Même livre, mais pages différentes : il s’agit peut-être de deux chapitres distincts.';
+  if (d.has('authors')) return 'Mêmes titre et livre, mais auteurs différents : vérifiez avant de confirmer.';
+  return null;
 }

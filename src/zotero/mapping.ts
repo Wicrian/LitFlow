@@ -28,8 +28,16 @@ export function toRecord(item: ZItem, sources: string[]): RecordItem {
     zoteroTags: (d.tags ?? []).map((t) => t.tag),
     collections: d.collections ?? [],
     sources,
+    bookTitle: str(d.bookTitle),
+    publisher: str(d.publisher),
+    isbn: str(d.ISBN),
+    volume: str(d.volume),
+    issue: str(d.issue),
+    numChildren: item.meta?.numChildren ?? 0,
   };
 }
+
+const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v : undefined);
 
 function extractDoiFromExtra(extra: string): string {
   return extra.match(/^DOI:\s*(\S+)/im)?.[1] ?? '';

@@ -45,6 +45,7 @@ export interface ZItem {
   key: string;
   version: number;
   data: ZItemData;
+  meta?: { numChildren?: number };
 }
 
 export class ZoteroError extends Error {

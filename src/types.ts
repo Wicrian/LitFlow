@@ -35,6 +35,14 @@ export interface RecordItem {
   collections: string[];
   /** Nom(s) de la ou des sources d'identification (sous-collections : PubMed, Scopus…). */
   sources: string[];
+  /** Détails utiles pour départager des doublons (facultatifs). */
+  bookTitle?: string;
+  publisher?: string;
+  isbn?: string;
+  volume?: string;
+  issue?: string;
+  /** Nombre de notes et pièces jointes (PDF…) rattachées dans Zotero. */
+  numChildren?: number;
 }
 
 export interface StageDecision {

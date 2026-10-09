@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { demoProject } from '../src/lib/demo';
-import { findDuplicateGroups } from '../src/lib/dedup';
+import { differingFields, dupFields, findDuplicateGroups, partsWarning } from '../src/lib/dedup';
 import { computePrisma, fulltextKeys, screeningKeys } from '../src/lib/prisma';
 import { highlight, normalizeForCompare, parsePageCount } from '../src/lib/text';
 import { buildItemPatch, desiredState, noteHtml } from '../src/zotero/sync';
@@ -93,5 +93,25 @@ describe('type de source', () => {
       expect(guessKind(n), n).toBe('other');
     expect(guessKind('ClinicalTrials.gov')).toBe('register');
     expect(guessKind('PROSPERO')).toBe('register');
+  });
+});
+
+
+describe('doublons : informations pour décider', () => {
+  const p = demoProject();
+  const chapters = Object.values(p.records).filter((r) => r.itemType === 'bookSection');
+  it('montre le livre, l’éditeur et les pages pour un chapitre', () => {
+    const ids = dupFields(chapters[0]).map((f) => f.id);
+    expect(ids).toEqual(expect.arrayContaining(['bookTitle', 'publisher', 'pages', 'isbn']));
+    expect(ids).not.toContain('publication');
+  });
+  it('signale deux chapitres de livres différents', () => {
+    expect(differingFields(chapters).has('bookTitle')).toBe(true);
+    expect(partsWarning(chapters)).toMatch(/livres différents/);
+  });
+  it('ne signale rien pour de vrais doublons d’article', () => {
+    const [a, b] = [p.records.DEMO0001, p.records.DEMO0002];
+    expect(partsWarning([a, b])).toBeNull();
+    expect(differingFields([a, b]).has('doi')).toBe(false);
   });
 });
