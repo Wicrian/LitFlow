@@ -187,7 +187,7 @@ export class ZoteroClient {
   }
 
   children(itemKey: string): Promise<ZItem[]> {
-    return this.json<ZItem[]>(`${this.prefix}/items/${itemKey}/children?format=json`);
+    return this.all<ZItem>(`${this.prefix}/items/${itemKey}/children?format=json`);
   }
 
   /**

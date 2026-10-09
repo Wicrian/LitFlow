@@ -11,10 +11,11 @@ import type { Category, RecordItem } from '../types';
 import { setAssignment, toggleMarker } from '../lib/organisation';
 import { authorsShort } from '../lib/text';
 import { useProject } from '../store';
+import { NotesBadge, ZoteroNotes } from './ZoteroNotes';
 
-type Bubble = { id: string; label: string; cat: Category | null; kind: 'cat' | 'parent-all' | 'back'; children: number };
+type Bubble = { id: string; label: string; cat: Category | null; kind: 'cat' | 'parent-all' | 'back' | 'add'; children: number };
 
-export function CircleView({ visible, onAddCategory, onColumns }: { visible: RecordItem[]; onAddCategory: () => void; onColumns: () => void }) {
+export function CircleView({ visible, onAddCategory, onColumns }: { visible: RecordItem[]; onAddCategory: (parent: string | null) => void; onColumns: () => void }) {
   const { project: p, update, markDirty } = useProject();
   const o = p.organisation;
   const [skipped, setSkipped] = useState<string[]>([]);
@@ -24,6 +25,7 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
   const [drag, setDrag] = useState<{ dx: number; dy: number; over: string | null } | null>(null);
   const [flying, setFlying] = useState<{ dx: number; dy: number } | null>(null);
   const [pop, setPop] = useState<string | null>(null);
+  const [notesFor, setNotesFor] = useState<string | null>(null);
   const start = useRef<{ x: number; y: number; id: number } | null>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   // À l'ouverture, amène le cercle à l'écran.
@@ -46,8 +48,14 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
         { id: 'back', label: 'Retour', cat: null, kind: 'back', children: 0 },
         { id: focusCat.id, label: `Tout « ${focusCat.name} »`, cat: focusCat, kind: 'parent-all', children: 0 },
         ...o.categories.filter((c) => c.parent === focusCat.id).map((c) => ({ id: c.id, label: c.name, cat: c, kind: 'cat' as const, children: 0 })),
+        { id: 'add', label: '+ Sous-catégorie', cat: null, kind: 'add', children: 0 },
       ]
-    : tops.map((c) => ({ id: c.id, label: c.name, cat: c, kind: 'cat' as const, children: o.categories.filter((x) => x.parent === c.id).length }));
+    : [
+        ...tops.map((c) => ({ id: c.id, label: c.name, cat: c, kind: 'cat' as const, children: o.categories.filter((x) => x.parent === c.id).length })),
+        { id: 'add', label: '+ Catégorie', cat: null, kind: 'add', children: 0 },
+      ];
+  // Les numéros 1–9 du clavier ne comptent que les vraies bulles.
+  const keyed = bubbles.filter((b) => b.kind !== 'add');
 
   const count = (id: string) => visible.filter((r) => (o.assignments[r.key] ?? []).includes(id)).length;
 
@@ -76,6 +84,7 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
   /** Toucher une bulle : coche / décoche, la carte reste. */
   const tapBubble = (b: Bubble) => {
     if (b.kind === 'back') return setFocus(null);
+    if (b.kind === 'add') return onAddCategory(focusCat?.id ?? null);
     if (b.kind === 'cat' && b.children > 0) return setFocus(b.id);
     if (!cur) return;
     setCurrent(cur.key);
@@ -108,9 +117,9 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
       const t = e.target as HTMLElement;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || e.ctrlKey || e.metaKey) return;
       const n = parseInt(e.key, 10);
-      if (n >= 1 && n <= 9 && bubbles[n - 1]) {
+      if (n >= 1 && n <= 9 && keyed[n - 1]) {
         e.preventDefault();
-        tapBubble(bubbles[n - 1]);
+        tapBubble(keyed[n - 1]);
       } else if (e.key === 'Enter' || e.key === 'ArrowRight') {
         e.preventDefault();
         next();
@@ -149,7 +158,7 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
     start.current = null;
     if (!s || !drag) return setDrag(null);
     const b = bubbles.find((x) => x.id === drag.over);
-    if (!b || b.kind === 'back') return setDrag(null);
+    if (!b || b.kind === 'back' || b.kind === 'add') return setDrag(null);
     if (b.kind === 'cat' && b.children > 0) {
       // Déposée sur une catégorie qui a des sous-catégories : on ouvre le second cercle.
       setFocus(b.id);
@@ -167,7 +176,7 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
     return (
       <div className="panel">
         Aucune catégorie pour l’instant.{' '}
-        <button className="btn small" onClick={onAddCategory}>
+        <button className="btn small" onClick={() => onAddCategory(null)}>
           Créer une catégorie
         </button>
       </div>
@@ -182,26 +191,27 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
       <div className={`circle ${n > 10 ? 'many' : ''}`} ref={ringRef}>
         {bubbles.map((b, i) => {
           const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
-          const on = cur && b.kind !== 'back' && assigned.includes(b.id);
+          const on = cur && b.kind !== 'back' && b.kind !== 'add' && assigned.includes(b.id);
+          const k = keyed.indexOf(b);
           return (
             <button
               key={b.id}
               data-bubble={b.id}
-              className={`bubble ${b.kind} ${on ? 'on' : ''} ${drag?.over === b.id ? 'over' : ''} ${pop === b.id ? 'pop' : ''}`}
+              className={`bubble ${b.kind} ${b.children ? 'has-subs' : ''} ${on ? 'on' : ''} ${drag?.over === b.id ? 'over' : ''} ${pop === b.id ? 'pop' : ''}`}
               style={{ left: `${50 + 41 * Math.cos(angle)}%`, top: `${50 + 41 * Math.sin(angle)}%` }}
               onClick={() => tapBubble(b)}
               title={b.cat ? b.cat.name : ''}
             >
-              {i < 9 && <kbd className="bubble-key">{i + 1}</kbd>}
+              {k >= 0 && k < 9 && <kbd className="bubble-key">{k + 1}</kbd>}
               {b.kind === 'back' ? <ArrowLeft size={18} /> : null}
               <span className="bubble-label">{b.label}</span>
-              {b.kind !== 'back' && (
+              {b.kind !== 'back' && b.kind !== 'add' && (
                 <span className="bubble-count">
                   {on ? '✓ ' : ''}
                   {count(b.id)}
-                  {b.children > 0 && ' ▸'}
                 </span>
               )}
+              {b.children > 0 && <span className="bubble-subs">{b.children} sous-cat. ▸</span>}
             </button>
           );
         })}
@@ -229,6 +239,7 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
                 </div>
                 {cur.abstract && <div className="stack-abstract small">{cur.abstract}</div>}
                 <div className="row" style={{ gap: '0.25rem', marginTop: 'auto' }}>
+                  <NotesBadge recordKey={cur.key} onOpen={() => setNotesFor(cur.key)} />
                   {(f || s) && <span className={`badge ${f ?? s}`}>{f ? (f === 'include' ? 'Dans la revue' : f === 'exclude' ? 'Exclue (texte)' : 'Incertaine') : s === 'include' ? 'Tri : inclue' : s === 'exclude' ? 'Tri : exclue' : 'Tri : ?'}</span>}
                 </div>
               </div>
@@ -242,6 +253,20 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
         </div>
       </div>
 
+      {notesFor && p.records[notesFor] && (
+        <div className="overlay" onClick={() => setNotesFor(null)}>
+          <div className="sheet stack" onClick={(e) => e.stopPropagation()}>
+            <strong>{p.records[notesFor].title}</strong>
+            <ZoteroNotes recordKey={notesFor} defaultOpen />
+            <div className="row">
+              <span className="spacer" />
+              <button className="btn dark" onClick={() => setNotesFor(null)}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {!cur && (
         <button className="btn" onClick={onColumns}>
           <Columns3 size={16} /> Passer en vue colonnes
@@ -267,7 +292,9 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
           </div>
           <div className="small muted" style={{ textAlign: 'center' }}>
             {stack.length} à classer · glissez la carte vers une bulle, ou touchez une ou plusieurs bulles puis « Suivante »
+            {focusCat ? '' : ' · une bulle « ▸ » ouvre ses sous-catégories'}
           </div>
+
           {o.markers.length > 0 && (
             <div className="row" style={{ justifyContent: 'center', gap: '0.35rem' }}>
               {o.markers.map((m) => {

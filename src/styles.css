@@ -606,3 +606,26 @@ details > summary::-webkit-details-marker { display: none; }
 .lines { padding-left: 1.2rem; }
 .lines li { margin-bottom: 0.6rem; }
 .line-text { display: block; flex: 1; font-size: 0.82rem; word-break: break-word; white-space: pre-wrap; padding: 0.4rem 0.55rem; }
+
+/* ---- Notes Zotero affichées dans LitFlow ---- */
+.znotes { display: flex; flex-direction: column; gap: 0.4rem; text-align: left; }
+.znotes.small, div.znotes.muted { flex-direction: row; align-items: center; gap: 0.35rem; }
+.znotes-head { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid var(--border); background: var(--panel-strong); border-radius: 999px; padding: 0.35rem 0.8rem; cursor: pointer; color: var(--text); font: inherit; font-size: 0.85rem; align-self: flex-start; }
+.znotes-head:hover { border-color: var(--accent); }
+.znotes-head .badge { margin-right: 0.3rem; }
+.znotes-body { display: flex; flex-direction: column; gap: 0.5rem; max-height: 320px; overflow-y: auto; padding-right: 0.2rem; }
+.znote { white-space: pre-wrap; background: var(--maybe-soft); border-radius: 12px; padding: 0.6rem 0.75rem; font-size: 0.86rem; line-height: 1.45; }
+.zmark { border-left: 4px solid; background: var(--panel-strong); border-radius: 4px 12px 12px 4px; padding: 0.45rem 0.7rem; font-size: 0.86rem; }
+.zmark-text { font-style: italic; }
+.zmark-comment { margin-top: 0.2rem; }
+
+/* ---- Sous-catégories plus visibles ---- */
+.bubble.has-subs { box-shadow: 0 0 0 5px var(--panel-solid), 0 0 0 7px var(--accent-soft), var(--shadow); }
+.bubble-subs { font-size: 0.66rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 0.05rem 0.45rem; margin-top: 0.1rem; white-space: nowrap; }
+.bubble.on .bubble-subs { background: rgba(255, 255, 255, 0.25); color: inherit; }
+.bubble.add { width: 76px; height: 76px; border-style: dashed; background: transparent; color: var(--accent); box-shadow: none; }
+.bubble.add .bubble-label { font-size: 0.74rem; }
+.board-tools .board-addsub { display: inline-flex; grid-auto-flow: column; gap: 0.15rem; font-size: 0.72rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 0.15rem 0.45rem; border-radius: 999px; }
+.seg-count { font-size: 0.72rem; opacity: 0.6; margin-left: 0.15rem; }
+.notes-badge { display: inline-flex; align-items: center; gap: 0.2rem; border: 1px solid var(--maybe); background: var(--maybe-soft); color: var(--text); border-radius: 999px; padding: 0.1rem 0.55rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+.notes-badge:hover { filter: brightness(0.97); }

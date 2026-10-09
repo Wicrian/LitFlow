@@ -23,6 +23,7 @@ import type { ZCollection } from '../zotero/api';
 import { adoptExistingRoot, organisationRootName } from '../zotero/organisationSync';
 import { ClassifyPanel } from './ClassifyPanel';
 import { CircleView } from './CircleView';
+import { ZoteroNotes } from './ZoteroNotes';
 
 type Scope = 'review' | 'screening' | 'all' | 'excluded';
 const NONE = '__none';
@@ -151,14 +152,9 @@ function OrganisationSetup() {
 function Board() {
   const { project: p, update, markDirty } = useProject();
   const o = p.organisation;
-  // Vue par défaut : la plus avancée du parcours de revue s'il est utilisé, sinon toutes les références.
-  const [scope, setScope] = useState<Scope>(() =>
-    Object.values(p.fulltext).some((d) => d.decision === 'include')
-      ? 'review'
-      : Object.values(p.screening).some((d) => d.decision !== 'exclude')
-        ? 'screening'
-        : 'all',
-  );
+  // Vue par défaut : toutes les références (triées ou non). Seule une revue déjà
+  // arrivée au texte intégral s'ouvre sur les références incluses.
+  const [scope, setScope] = useState<Scope>(() => (Object.values(p.fulltext).some((d) => d.decision === 'include') ? 'review' : 'all'));
   const [markerFilter, setMarkerFilter] = useState<string[]>([]);
   const [view, setViewState] = useState<'circle' | 'columns'>(() => {
     try {
@@ -189,6 +185,19 @@ function Board() {
   };
 
   // Références visibles selon l'étape PRISMA choisie.
+  const inScope = (sc: Scope, r: RecordItem, ft: Set<string>) => {
+    const s = p.screening[r.key]?.decision;
+    if (sc === 'review') return p.fulltext[r.key]?.decision === 'include';
+    if (sc === 'screening') return s === 'include' || s === 'maybe' || (ft.has(r.key) && !s);
+    if (sc === 'excluded') return s === 'exclude' || p.fulltext[r.key]?.decision === 'exclude';
+    return true;
+  };
+  const scopeCounts = useMemo(() => {
+    const ft = new Set(fulltextKeys(p));
+    const rs = Object.values(p.records).filter((r) => !(r.key in p.duplicates));
+    return Object.fromEntries((['all', 'screening', 'review', 'excluded'] as Scope[]).map((sc) => [sc, rs.filter((r) => inScope(sc, r, ft)).length])) as Record<Scope, number>;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.records, p.duplicates, p.screening, p.fulltext]);
   const visible = useMemo(() => {
     const ft = new Set(fulltextKeys(p));
     const nq = normalizeForCompare(q);
@@ -303,20 +312,31 @@ function Board() {
           <div className="seg">
             {(
               [
-                ['review', 'Incluses dans la revue'],
-                ['screening', 'Retenues au tri'],
-                ['excluded', 'Exclues'],
                 ['all', 'Toutes'],
+                ['screening', 'Retenues au tri'],
+                ['review', 'Incluses dans la revue'],
+                ['excluded', 'Exclues'],
               ] as [Scope, string][]
-            ).map(([k, l]) => (
-              <button key={k} className={scope === k ? 'on' : ''} onClick={() => setScope(k)}>
-                {l}
-              </button>
-            ))}
+            )
+              .filter(([k]) => k === 'all' || k === scope || scopeCounts[k] > 0)
+              .map(([k, l]) => (
+                <button key={k} className={scope === k ? 'on' : ''} onClick={() => setScope(k)}>
+                  {l} <span className="seg-count">{scopeCounts[k]}</span>
+                </button>
+              ))}
           </div>
           <span className="spacer" />
           <span className="small muted">{visible.length} référence(s)</span>
         </div>
+        {scope !== 'all' && (
+          <div className="small muted">
+            Seule une partie de vos références est affichée.{' '}
+            <a href="#" onClick={(e) => (e.preventDefault(), setScope('all'))}>
+              Voir toutes les références ({scopeCounts.all})
+            </a>
+            , triées ou non.
+          </div>
+        )}
         <MarkerBar selected={markerFilter} onToggle={(id) => setMarkerFilter((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]))} />
         {view === 'columns' && (
           <div className="small muted">
@@ -326,7 +346,7 @@ function Board() {
         )}
       </section>
 
-      {view === 'circle' && <CircleView visible={visible} onAddCategory={() => addCategory(null)} onColumns={() => setView('columns')} />}
+      {view === 'circle' && <CircleView visible={visible} onAddCategory={addCategory} onColumns={() => setView('columns')} />}
 
       {view === 'columns' && (
         <div className="row">
@@ -358,8 +378,8 @@ function Board() {
                     <Pencil size={14} />
                   </button>
                   {!col.cat.parent && (
-                    <button title="Ajouter une sous-catégorie" onClick={() => addCategory(col.cat!.id)}>
-                      <Plus size={14} />
+                    <button className="board-addsub" title="Ajouter une sous-catégorie" onClick={() => addCategory(col.cat!.id)}>
+                      <Plus size={13} /> sous-cat.
                     </button>
                   )}
                   <button title="Supprimer" onClick={() => setDeleting(col.cat)}>
@@ -499,6 +519,7 @@ function ClassifyDialog({ recordKey, onClose }: { recordKey: string; onClose: ()
         <div className="small muted">
           {authorsShort(r.creators, 4)} · {r.year ?? 's.d.'} {r.publication && <>· {r.publication}</>}
         </div>
+        <ZoteroNotes recordKey={recordKey} defaultOpen />
         <ClassifyPanel recordKey={recordKey} always />
         <div className="row">
           <span className="spacer" />

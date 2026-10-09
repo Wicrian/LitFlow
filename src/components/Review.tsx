@@ -5,6 +5,7 @@ import { applyFilters, emptyFilters, sortRecords, type Filters, type SortKey } f
 import { fulltextKeys, recordKind, screeningKeys } from '../lib/prisma';
 import { authorsShort, highlight, splitKeywords } from '../lib/text';
 import { useProject } from '../store';
+import { ZoteroNotes } from './ZoteroNotes';
 import { zoteroOpenPdfLink, zoteroSelectLink, type ZItem } from '../zotero/api';
 import { itemTypeLabel } from '../zotero/mapping';
 import { FilterBar } from './FilterBar';
@@ -345,7 +346,7 @@ function SwipeCard({ onSwipe, children }: { onSwipe: (d: Decision) => void; chil
         className={`card ${start.current ? 'dragging' : ''} ${flying || !start.current ? 'animating' : ''}`}
         style={{ transform, opacity: flying ? 0 : 1 }}
         onPointerDown={(e) => {
-          if ((e.target as HTMLElement).closest('a,button,input,textarea,select')) return;
+          if ((e.target as HTMLElement).closest('a,button,input,textarea,select,.znotes')) return;
           start.current = { x: e.clientX, y: e.clientY };
           (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
         }}
@@ -439,6 +440,9 @@ function RecordCard({
         {r.zoteroTags.filter((t) => !t.startsWith(`${p.sync.tagPrefix}:`)).slice(0, 8).map((t) => (
           <span key={t} className="muted">#{t}</span>
         ))}
+      </div>
+      <div style={{ marginTop: '0.75rem' }}>
+        <ZoteroNotes recordKey={r.key} defaultOpen={showLinks} />
       </div>
     </>
   );
