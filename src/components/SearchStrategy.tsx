@@ -5,6 +5,7 @@ import { conceptsFromProtocol, DB_PROFILES, genericEquation, profileFor, searchJ
 import { download, safeFileName } from '../lib/export';
 import { normalizeForCompare } from '../lib/text';
 import { useProject } from '../store';
+import { Portal } from './Portal';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const today = () => new Date().toISOString().slice(0, 10);
@@ -341,7 +342,7 @@ function CustomDbDialog({ onClose, onAdd }: { onClose: () => void; onAdd: (db: S
   const [parens, setParens] = useState(true);
   const [help, setHelp] = useState('');
   return (
-    <div className="overlay" onClick={onClose}>
+    <Portal><div className="overlay" onClick={onClose}>
       <div className="modal stack" onClick={(e) => e.stopPropagation()}>
         <h2>Ajouter une base de données</h2>
         <p className="small muted">Indiquez ce que la base accepte (cherchez « aide », « recherche avancée » ou « opérateurs » sur son site).</p>
@@ -395,7 +396,7 @@ function CustomDbDialog({ onClose, onAdd }: { onClose: () => void; onAdd: (db: S
           </button>
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }
 

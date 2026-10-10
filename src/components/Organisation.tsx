@@ -26,6 +26,7 @@ import { ClassifyPanel } from './ClassifyPanel';
 import { CircleView } from './CircleView';
 import { NS } from '../lib/env';
 import { ZoteroNotes } from './ZoteroNotes';
+import { Portal } from './Portal';
 
 type Scope = 'review' | 'screening' | 'all' | 'excluded';
 const NONE = '__none';
@@ -567,7 +568,7 @@ function ClassifyDialog({ recordKey, onClose }: { recordKey: string; onClose: ()
   const { project: p } = useProject();
   const r = p.records[recordKey];
   return (
-    <div className="overlay" onClick={onClose}>
+    <Portal><div className="overlay" onClick={onClose}>
       <div className="sheet stack" onClick={(e) => e.stopPropagation()}>
         <strong>{r.title}</strong>
         <div className="small muted">
@@ -582,7 +583,7 @@ function ClassifyDialog({ recordKey, onClose }: { recordKey: string; onClose: ()
           </button>
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }
 
@@ -604,7 +605,7 @@ function DeleteCategoryDialog({ cat, onClose }: { cat: Category; onClose: () => 
   };
 
   return (
-    <div className="overlay" onClick={onClose}>
+    <Portal><div className="overlay" onClick={onClose}>
       <div className="modal stack" onClick={(e) => e.stopPropagation()}>
         <h2>Supprimer « {cat.name} »</h2>
         <p className="small muted">
@@ -651,6 +652,6 @@ function DeleteCategoryDialog({ cat, onClose }: { cat: Category; onClose: () => 
           </button>
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }

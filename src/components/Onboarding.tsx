@@ -8,6 +8,7 @@ import type { ReviewMode } from '../types';
 import { MODES } from '../lib/guide';
 import { useProject } from '../store';
 import { ImportView } from './ImportView';
+import { Portal } from './Portal';
 
 type Step = 'mode' | 'zotero' | 'preview';
 
@@ -23,7 +24,7 @@ export function Onboarding({ onSettings, onFinish }: { onSettings: () => void; o
   };
 
   return (
-    <div className="overlay onboarding">
+    <Portal><div className="overlay onboarding">
       <div className="onb-card stack">
         <div className="row">
           <div className="onb-dots">
@@ -112,7 +113,7 @@ export function Onboarding({ onSettings, onFinish }: { onSettings: () => void; o
           </>
         )}
       </div>
-    </div>
+    </div></Portal>
   );
 }
 

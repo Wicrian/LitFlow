@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Check, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { guideSteps, type ViewId } from '../lib/guide';
 import { useProject } from '../store';
+import { Portal } from './Portal';
 
 export function Guide({ openDuplicates, onGo }: { openDuplicates: number; onGo: (v: ViewId) => void }) {
   const { project: p, update } = useProject();
@@ -20,7 +21,7 @@ export function Guide({ openDuplicates, onGo }: { openDuplicates: number; onGo: 
   };
 
   return (
-    <aside className={`guide ${open ? 'open' : ''}`}>
+    <Portal><aside className={`guide ${open ? 'open' : ''}`}>
       <div className="guide-head">
         <button className="guide-toggle" onClick={() => setOpen((o) => !o)}>
           <strong>Pour bien démarrer</strong>
@@ -70,6 +71,6 @@ export function Guide({ openDuplicates, onGo }: { openDuplicates: number; onGo: 
           )}
         </>
       )}
-    </aside>
+    </aside></Portal>
   );
 }

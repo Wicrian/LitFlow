@@ -12,6 +12,7 @@ import { setAssignment, toggleMarker } from '../lib/organisation';
 import { authorsShort } from '../lib/text';
 import { useProject } from '../store';
 import { NotesBadge, ZoteroNotes } from './ZoteroNotes';
+import { Portal } from './Portal';
 
 type Bubble = { id: string; label: string; cat: Category | null; kind: 'cat' | 'parent-all' | 'back' | 'add'; children: number };
 
@@ -244,7 +245,7 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
       </div>
 
       {notesFor && p.records[notesFor] && (
-        <div className="overlay" onClick={() => setNotesFor(null)}>
+        <Portal><div className="overlay" onClick={() => setNotesFor(null)}>
           <div className="sheet stack" onClick={(e) => e.stopPropagation()}>
             <strong>{p.records[notesFor].title}</strong>
             <ZoteroNotes recordKey={notesFor} defaultOpen />
@@ -255,7 +256,7 @@ export function CircleView({ visible, onAddCategory, onColumns }: { visible: Rec
               </button>
             </div>
           </div>
-        </div>
+        </div></Portal>
       )}
       {!cur && (
         <button className="btn" onClick={onColumns}>

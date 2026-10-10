@@ -13,6 +13,7 @@ import { ClassifyPanel } from './ClassifyPanel';
 import { AiProgressText, useAiProgress } from './AiProgress';
 import { runSuggestions } from '../ai/run';
 import { cohenKappa, kappaLabel } from '../lib/agreement';
+import { Portal } from './Portal';
 
 const DECISION_ICON: Record<Decision, ReactNode> = { exclude: <X />, maybe: <HelpCircle />, include: <Check /> };
 
@@ -672,7 +673,7 @@ export function ReasonSheet({
 
   const r = p.records[decisionKey];
   return (
-    <div className="overlay" onClick={save}>
+    <Portal><div className="overlay" onClick={save}>
       <div className="sheet stack" onClick={(e) => e.stopPropagation()}>
         <div className="row">
           {(['exclude', 'maybe', 'include'] as Decision[]).map((d) => (
@@ -724,7 +725,7 @@ export function ReasonSheet({
           </button>
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }
 

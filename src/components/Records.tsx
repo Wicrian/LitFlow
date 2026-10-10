@@ -11,6 +11,7 @@ import { FilterBar } from './FilterBar';
 import { DECISION_UI, ReasonSheet } from './Review';
 import { ClassifyPanel } from './ClassifyPanel';
 import { categoryLabel, orderedCategories, toggleCategory, toggleMarker } from '../lib/organisation';
+import { Portal } from './Portal';
 
 const PAGE = 100;
 
@@ -253,7 +254,7 @@ function RecordDetail({ r, onClose }: { r: RecordItem; onClose: () => void }) {
   };
 
   return (
-    <div className="overlay" onClick={onClose}>
+    <Portal><div className="overlay" onClick={onClose}>
       <div className="modal stack" onClick={(e) => e.stopPropagation()}>
         <h2>{r.title}</h2>
         <div className="muted">
@@ -295,6 +296,6 @@ function RecordDetail({ r, onClose }: { r: RecordItem; onClose: () => void }) {
           />
         </div>
       )}
-    </div>
+    </div></Portal>
   );
 }
